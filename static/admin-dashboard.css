@@ -1,0 +1,30 @@
+/* FLOW NOTE: Presentation only; active Flask templates load this admin dashboard stylesheet through the static folder when the matching page is rendered. */
+/* DEBUG NOTE: Dashboard-only styling follows the Charles AI reference; existing admin actions and data stay intact. */
+body:has(.ai-admin-shell) { min-height:100vh; background:#030817; color:#eaf4ff; }
+.ai-admin-shell { min-height:100vh; }
+.ai-admin-nav { width:min(1200px,calc(100% - 32px)); min-height:58px; margin:0 auto; padding:0 16px; display:flex; align-items:center; justify-content:space-between; gap:20px; border:1px solid #102c3d; border-top:0; border-radius:0 0 22px 22px; background:#050a15; box-shadow:0 8px 28px #00cfff12; }
+.ai-admin-brand { color:#21c8ff; font-size:23px; font-weight:900; letter-spacing:2px; white-space:nowrap; }
+.ai-admin-brand span { margin-right:8px; }
+.ai-admin-nav nav { display:flex; align-items:center; gap:clamp(10px,2.2vw,34px); }
+.ai-admin-nav nav a { color:#dbe5f2; font-size:14px; }
+.theme-toggle { width:44px; height:44px; border:0; border-radius:50%; background:#20bff3; font-size:23px; cursor:pointer; }
+.ai-admin-content { width:min(800px,calc(100% - 32px)); margin:28px auto 60px; }
+.ai-admin-content>h1 { margin:26px 0 0; color:#22c6ff; text-align:center; font-size:clamp(28px,4vw,42px); letter-spacing:3px; text-shadow:0 0 18px #13caff8a; }
+.ai-admin-content>h1 span { margin-right:10px; }
+.ai-admin-greeting { margin:4px 0 26px; color:#7c91aa; text-align:center; }
+.ai-admin-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.ai-admin-stat { min-height:158px; display:grid; align-content:center; justify-items:center; gap:10px; border:1px solid #123145; border-radius:20px; background:linear-gradient(145deg,#151c2a,#0c111d); box-shadow:0 0 12px #14c5ff0b; }
+.ai-admin-stat h2 { margin:0; font-size:18px; }
+.ai-admin-stat strong { color:#26c9ff; font-size:38px; line-height:1; text-shadow:0 0 12px #16caffaa; }
+.ai-admin-actions { display:flex; gap:8px; margin-top:30px; }
+.ai-admin-actions form { margin:0; }
+.ai-admin-logout,.ai-admin-create-toggle { min-height:46px; padding:0 24px; border:0; border-radius:24px; color:#fff; font-weight:700; cursor:pointer; }
+.ai-admin-logout { background:linear-gradient(110deg,#f52c32,#b80e1c); }
+.ai-admin-create-toggle { background:linear-gradient(110deg,#21c8ff,#1676ff); }
+.ai-admin-create[hidden] { display:none; }
+.ai-admin-create { margin-top:24px; padding:24px; border:1px solid #123145; border-radius:16px; background:#101827; }
+.ai-admin-create form { max-width:520px; display:grid; gap:14px; }
+.ai-admin-create label { display:grid; gap:6px; }
+.ai-admin-create input { width:100%; padding:12px; border:1px solid #263c52; border-radius:7px; background:#08111e; color:white; }
+.ai-admin-create form button { min-height:44px; border:0; border-radius:8px; background:#21b9ed; font-weight:700; cursor:pointer; }
+@media(max-width:680px) { .ai-admin-nav { align-items:flex-start; flex-direction:column; padding:14px; } .ai-admin-nav nav { width:100%; flex-wrap:wrap; gap:12px; } .ai-admin-stats { gap:12px; } .ai-admin-stat { min-height:130px; } }

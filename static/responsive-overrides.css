@@ -1,0 +1,491 @@
+/* HIANIME V2.3: shared responsive layer, loaded last across public and admin pages. */
+*, *::before, *::after { box-sizing: border-box; }
+html { width: 100%; max-width: 100%; scroll-padding-top: 76px; }
+body { width: 100%; max-width: 100%; overflow-x: clip; }
+img, video, iframe, canvas, svg { max-width: 100%; }
+input, select, textarea, button { max-width: 100%; }
+main, section, article, aside, header, footer, nav, form { min-width: 0; }
+table { max-width: 100%; }
+
+/* Keep wide layouts centered and fluid on desktop and ultrawide displays. */
+.catalog-page { width: min(100% - 40px, 1720px); margin-inline: auto; }
+.hero-slider { width: 100%; max-width: 100%; }
+.home-feed-layout { width: min(100% - 40px, 1500px); margin-inline: auto; }
+.anime-section, .weekly-schedule, .release-collections { min-width: 0; max-width: 100%; }
+.anime-grid { min-width: 0; }
+.anime-card, .anime-card-link { min-width: 0; }
+.anime-card img { max-width: 100%; }
+.home-feed-heading, .weekly-schedule-heading { min-width: 0; }
+.weekly-schedule, .schedule-items { overflow: hidden; }
+.admin-shell, .ai-admin-shell { width: min(100% - 40px, 1480px); margin-inline: auto; }
+.admin-table-wrap, .user-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.admin-table, .user-table { min-width: 760px; }
+
+/* Alphabet links stay compact and wrap like chips; they must never become full-width rows. */
+nav.footer-alphabet, .footer-alphabet {
+  display: flex !important;
+  flex-flow: row wrap !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+.footer-alphabet > a {
+  display: inline-grid !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  place-items: center;
+  white-space: nowrap;
+}
+.footer-alphabet > span { flex: 0 0 auto; }
+
+/* Public sign-in/register opens as a centered viewport dialog on every route. */
+.auth-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 18px;
+  padding-block: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-bottom));
+}
+.auth-backdrop[hidden] { display: none !important; }
+.auth-modal {
+  width: min(100%, 400px);
+  max-height: min(92vh, 760px);
+  max-height: min(92dvh, 760px);
+  margin: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.login-page { min-height: 100vh; min-height: 100dvh; }
+
+@media (min-width: 1600px) {
+  .home-feed-layout { grid-template-columns: minmax(0, 1fr) minmax(270px, 320px); gap: 28px; }
+  .home-feed-section .anime-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1100px) {
+  .catalog-page { width: calc(100% - 32px); }
+  .home-feed-layout { width: calc(100% - 32px); grid-template-columns: minmax(0, 1fr); }
+  .home-feed-main { grid-column: 1; grid-row: auto; }
+  .home-feed-sidebar { grid-column: 1; grid-row: auto; width: 100%; }
+  .home-feed-sidebar > .top-anime-panel { width: 100%; max-width: none; }
+  .top-anime-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-shell, .ai-admin-shell { width: calc(100% - 32px); }
+}
+
+/* The page stylesheet pins these grid rows with a more specific selector,
+   so explicitly reset the tablet/mobile grid at the same specificity. */
+@media (max-width: 900px) {
+  .catalog-page .home-feed-layout {
+    display: grid !important;
+    width: calc(100% - 24px) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 22px !important;
+  }
+  .catalog-page .home-feed-main {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+  }
+  .catalog-page .home-feed-sidebar {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .catalog-page .home-feed-sidebar > .top-anime-panel {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .side-menu,
+  #navbar.side-menu {
+    width: min(620px, calc(100vw - 10px)) !important;
+    min-width: 0;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 60px) !important;
+    grid-template-columns: minmax(92px, 28%) minmax(0, 1fr) !important;
+    overflow: auto;
+  }
+  .side-menu .menu-sidebar { min-width: 0; }
+  .side-menu .mega-panel { min-width: 0; padding: 42px 12px 16px !important; overflow: auto; }
+  .side-menu .genre-grid,
+  .side-menu .type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px 8px; }
+}
+
+@media (max-width: 760px) {
+  html { scroll-padding-top: 64px; }
+  .site-header, .topbar { min-height: 58px; height: auto; padding-inline: 12px; gap: 10px; }
+  .site-header { flex-wrap: wrap; }
+  .site-header .header-brand .logo img { width: clamp(112px, 34vw, 150px) !important; max-width: 34vw !important; height: auto !important; }
+  .quick-nav { gap: 10px; margin-left: 0; }
+  .quick-nav a, .quick-nav button { font-size: 13px; }
+  .global-search { width: auto; flex: 1 1 100%; order: 5; }
+  .catalog-page { width: calc(100% - 24px); }
+  .hero-slider { min-height: 320px; height: clamp(320px, 62svh, 520px); }
+  .hero-slider .slide-image { object-fit: cover; object-position: center; }
+  .hero-slider .content { left: clamp(18px, 5vw, 44px); width: min(78%, 520px); }
+  .hero-slider .content h1 { font-size: clamp(28px, 6vw, 48px); overflow-wrap: anywhere; }
+  .hero-slider .content p { max-width: 52ch; }
+  .home-feed-layout { width: calc(100% - 24px); gap: 22px; }
+  .home-feed-section .anime-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .home-feed-heading { flex-wrap: wrap; gap: 8px; }
+  .home-feed-heading .feed-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+  .home-feed-heading .episode-carousel-controls { margin-left: auto; }
+  .release-collections { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .release-collection .anime-grid { gap: 8px; }
+  .schedule-days { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; padding-inline: 8px; }
+  .schedule-days button { min-width: 0; }
+  .schedule-item { grid-template-columns: 42px 32px minmax(0, 1fr); gap: 7px; }
+  .schedule-item small { grid-column: 3; text-align: left; }
+  .watch-page, .watch-container { width: 100%; max-width: 100%; }
+  .watch-container.watch-layout { grid-template-columns: minmax(0, 1fr); }
+  .watch-episode-sidebar { max-height: 420px; order: 2; }
+  .watch-main-column { min-width: 0; order: 1; }
+  .player-wrapper { width: 100%; }
+  .admin-shell, .ai-admin-shell { width: calc(100% - 24px); }
+  .admin-section-heading { flex-wrap: wrap; }
+  .admin-panel, .integration-panel { max-width: 100%; }
+  .admin-form .admin-media-grid { grid-template-columns: minmax(0, 1fr); }
+  .robot-nav { width: 100%; border-radius: 0 0 14px 14px; }
+  .anilist-admin-result { align-items: flex-start; flex-wrap: wrap; }
+  .anilist-admin-result form { max-width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .site-header { gap: 8px; padding: 8px 10px; }
+  .quick-nav { flex: 1 1 100%; order: 6; overflow-x: auto; scrollbar-width: none; }
+  .quick-nav::-webkit-scrollbar { display: none; }
+  .site-header .header-brand { gap: 8px; }
+  .site-header .header-brand .logo img { width: 112px !important; max-width: 30vw !important; }
+  .catalog-page { width: calc(100% - 20px); }
+  .hero-slider { width: 100%; min-height: 330px; height: min(66svh, 430px); border-radius: 10px; }
+  .hero-slider .slide-image { object-position: 56% center; }
+  .hero-slider .content { left: 16px; right: 16px; bottom: 42px; top: auto; width: auto; max-width: none; transform: none; }
+  .hero-slider .content h1 { max-width: 15ch; margin-bottom: 8px; font-size: clamp(26px, 8vw, 38px); line-height: 1.02; }
+  .hero-slider .content p { display: -webkit-box; max-width: 42ch; overflow: hidden; font-size: 13px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  .hero-slider .slider-arrow, .hero-slider .slide-arrow { width: 34px; height: 34px; }
+  .hero-slider .slider-dots, .hero-slider .slide-dots { bottom: 12px; }
+  .home-feed-layout { width: calc(100% - 20px); }
+  .home-feed-section .anime-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .home-feed-section#latest-episode .feed-results > .anime-card { flex-basis: calc((100% - 10px) / 2); }
+  .home-feed-heading { align-items: flex-start; }
+  .home-feed-heading > div:first-child { flex: 1 1 100%; }
+  .home-feed-heading .feed-tabs { order: 3; flex: 1 1 100%; }
+  .release-collections { grid-template-columns: minmax(0, 1fr); }
+  .top-anime-list { grid-template-columns: minmax(0, 1fr); }
+  .top-anime-card { min-width: 0; }
+  .weekly-schedule-heading { align-items: flex-start; flex-direction: column; padding: 14px; }
+  .schedule-days { overflow-x: auto; grid-template-columns: repeat(7, minmax(48px, 1fr)); }
+  .schedule-items { padding-inline: 8px; }
+  .schedule-item { grid-template-columns: 38px minmax(0, 1fr) auto; gap: 7px; }
+  .schedule-item img { display: none; }
+  .schedule-item strong { white-space: normal; }
+  .watch-heading { flex-wrap: wrap; }
+  .episode-list.is-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .server-row { flex-wrap: wrap; }
+  .anime-information { grid-template-columns: 72px minmax(0, 1fr); }
+  .ai-admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ai-admin-actions { flex-wrap: wrap; }
+  .anilist-admin-result form { width: 100%; margin-left: 0; }
+  .anilist-admin-result form button { width: 100%; }
+  .login-card { width: calc(100% - 24px); padding: 24px 18px; }
+  .auth-backdrop { padding-inline: 12px; }
+  .auth-modal { width: 100%; max-height: 94vh; max-height: 94dvh; padding: 24px 18px 20px; }
+  .auth-modal h2 { margin-bottom: 16px; }
+  .login-page { padding: 16px; }
+  .login-card { min-height: 0; }
+}
+
+@media (max-width: 560px) {
+  .catalog-page .home-feed-section#latest-episode > .home-feed-heading {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+  .catalog-page .home-feed-section#latest-episode > .home-feed-heading > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .catalog-page .home-feed-section#latest-episode > .home-feed-heading > .episode-carousel-controls {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex !important;
+    flex-direction: row !important;
+    align-self: center;
+  }
+  .catalog-page .home-feed-section#latest-episode > .home-feed-heading > .feed-tabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    justify-self: start;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .catalog-page .home-feed-section#latest-episode .feed-tabs button { flex: 0 0 auto; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .auth-backdrop { align-items: start; }
+  .auth-modal { max-height: 94vh; max-height: 94dvh; }
+  .login-page { align-items: start; }
+}
+
+@media (max-width: 380px) {
+  .home-feed-section .anime-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-slider .content h1 { font-size: 25px; }
+  .site-header .header-brand .logo img { width: 100px !important; }
+  .admin-shell, .ai-admin-shell { width: calc(100% - 16px); }
+}
+
+/* Compact the real shared navbar without dropping Search or Sign In on phones. */
+@media (max-width: 767px) {
+  .site-header.shared-site-header {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    height: 60px;
+    min-height: 60px;
+    padding: 5px 8px;
+    overflow: visible !important;
+  }
+  .shared-site-header .header-brand {
+    order: 0;
+    flex: 0 1 auto !important;
+    width: auto !important;
+    min-width: 0;
+    gap: 3px !important;
+  }
+  .shared-site-header .site-menu-toggle {
+    flex: 0 0 27px !important;
+    width: 27px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+  }
+  .shared-site-header .header-brand .logo img {
+    width: clamp(82px, 27vw, 122px) !important;
+    max-width: 27vw !important;
+    height: 40px !important;
+    max-height: 40px !important;
+  }
+  .shared-site-header .quick-nav { display: none !important; }
+  .shared-site-header .mobile-nav-language {
+    display: inline-flex !important;
+    order: 1;
+    flex: 0 0 auto !important;
+    margin: 0 2px 0 auto !important;
+  }
+  .shared-site-header .mobile-nav-language button { padding: 4px 6px; font-size: 10px; }
+  .shared-site-header .shared-home-actions {
+    order: 2 !important;
+    display: flex !important;
+    flex: 0 0 auto !important;
+    align-items: center;
+    gap: 0 !important;
+    width: auto;
+    margin: 0 !important;
+  }
+  .shared-site-header .user-page-tools { display: flex; flex: 0 0 auto; gap: 0; }
+  .shared-site-header #newAnimeToggle { order: 2; }
+  .shared-site-header #userSearchToggle {
+    order: 1;
+    display: inline-grid !important;
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    height: 38px !important;
+    place-items: center;
+  }
+  .shared-site-header #userSearchToggle svg { display: block; width: 19px; height: 19px; }
+  .shared-site-header #newAnimeToggle { width: 34px !important; height: 38px !important; flex-basis: 34px !important; }
+  .shared-site-header .shared-account-box,
+  .shared-site-header > .header-auth { order: 3 !important; flex: 0 0 auto !important; margin: 0 !important; }
+  .shared-site-header .header-auth { display: flex !important; }
+  .shared-site-header .header-auth a.signin {
+    display: inline-flex !important;
+    visibility: visible !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 7px 10px !important;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+  .shared-site-header .shared-account { padding: 0; }
+  .shared-site-header .shared-account { gap: 0; }
+  .shared-site-header .shared-account .username,
+  .shared-site-header .shared-account-chevron { display: none; }
+  .shared-site-header .shared-avatar-frame,
+  .shared-site-header .shared-avatar-frame .profile-image { width: 36px; height: 36px; }
+  .shared-site-header .user-search-panel,
+  .shared-site-header .new-anime-panel {
+    position: fixed !important;
+    z-index: 10020 !important;
+    top: calc(env(safe-area-inset-top, 0px) + 64px) !important;
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 76px) !important;
+    overflow: auto !important;
+  }
+
+  /* Mobile drawer sits below the header; the hamburger becomes a visible close X. */
+  .shared-site-header .site-menu-toggle[aria-expanded="true"] { font-size: 30px !important; line-height: 1 !important; }
+  .shared-site-header .site-menu-toggle[aria-expanded="true"]::before { display: none !important; }
+  .menu-backdrop { inset: 60px 0 0 !important; }
+  .side-menu, #navbar.side-menu {
+    top: 60px !important;
+    left: 0 !important;
+    width: min(620px, calc(100vw - 8px)) !important;
+    max-height: calc(100vh - 60px) !important;
+    max-height: calc(100dvh - 60px) !important;
+    min-height: 0 !important;
+    grid-template-columns: clamp(96px, 28vw, 124px) minmax(0, 1fr) !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+  }
+  .side-menu .menu-sidebar { min-width: 0; }
+  .side-menu .menu-sidebar a,
+  .side-menu .menu-sidebar .menu-category { min-height: 38px; padding: 8px 10px 8px 14px; font-size: 12px; }
+  .side-menu .mega-panel { min-width: 0; padding: 18px 10px 12px !important; overflow: auto; }
+  .side-menu .genre-grid,
+  .side-menu .type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px 6px; }
+  .side-menu .genre-grid a,
+  .side-menu .type-grid a { padding: 7px 4px; font-size: 11px; }
+}
+
+@media (min-width: 400px) and (max-width: 767px) {
+  .shared-site-header .header-brand .logo img { max-width: 27vw !important; }
+}
+
+@media (max-width: 380px) {
+  .shared-site-header { gap: 3px !important; padding-inline: 6px !important; }
+  .shared-site-header .site-menu-toggle { flex-basis: 24px !important; width: 24px !important; }
+  .shared-site-header .header-brand .logo img { width: clamp(76px, 25vw, 94px) !important; max-width: 25vw !important; }
+  .shared-site-header .mobile-nav-language { margin-right: 0 !important; }
+  .shared-site-header .mobile-nav-language button { padding: 3px 4px; font-size: 9px; }
+  .shared-site-header #userSearchToggle,
+  .shared-site-header #newAnimeToggle { flex-basis: 31px !important; width: 31px !important; }
+  .shared-site-header .header-auth a.signin { padding-inline: 7px !important; font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Mobile menu must stay a compact drawer; keep footer links at the real page end. */
+@media (max-width: 767px) {
+  .site-header.shared-site-header {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 3px !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    padding: 4px 7px !important;
+    overflow: visible !important;
+  }
+  .shared-site-header .header-brand {
+    order: 0 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    gap: 2px !important;
+  }
+  .shared-site-header .site-menu-toggle { flex: 0 0 24px !important; width: 24px !important; }
+  .shared-site-header .header-brand .logo img {
+    width: clamp(76px, 24vw, 112px) !important;
+    max-width: 24vw !important;
+    height: 38px !important;
+    max-height: 38px !important;
+  }
+  .shared-site-header .shared-home-actions {
+    order: 1 !important;
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 2px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 0 0 auto !important;
+  }
+  .shared-site-header .mobile-nav-language { order: 1 !important; margin: 0 !important; flex: 0 0 auto !important; }
+  .shared-site-header .mobile-nav-language button { padding: 3px 5px !important; font-size: 9px !important; }
+  .shared-site-header .user-page-tools { order: 2 !important; flex: 0 0 auto !important; gap: 0 !important; }
+  .shared-site-header #userSearchToggle,
+  .shared-site-header #newAnimeToggle { flex: 0 0 30px !important; width: 30px !important; height: 34px !important; }
+  .shared-site-header .shared-account-box,
+  .shared-site-header .header-auth { order: 3 !important; flex: 0 0 auto !important; margin: 0 !important; }
+  .shared-site-header .header-auth { display: flex !important; }
+  .shared-site-header .header-auth a.signin {
+    display: inline-flex !important;
+    min-width: max-content !important;
+    min-height: 34px !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+  #navbar.side-menu {
+    display: none !important;
+    position: fixed !important;
+    top: 60px !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 0 !important;
+    width: min(620px, calc(100vw - 8px)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 60px) !important;
+    grid-template-columns: clamp(96px, 28vw, 124px) minmax(0, 1fr) !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+    justify-content: start !important;
+    overflow: auto !important;
+  }
+  #navbar.side-menu.active { display: grid !important; }
+  #navbar.side-menu > .menu-sidebar {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-self: start !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  #navbar.side-menu > .mega-panel { grid-column: 2 !important; grid-row: 1 !important; }
+  #navbar.side-menu > .mega-panel:not(.active) { display: none !important; }
+  #navbar.side-menu > .mega-panel.active { display: block !important; }
+}
+
+/* The alphabet is rendered only by the footer template and must flow after content. */
+footer.site-footer {
+  position: relative !important;
+  inset: auto !important;
+  float: none !important;
+  clear: both;
+  width: 100%;
+}
+footer.site-footer .footer-alphabet { position: static !important; inset: auto !important; }

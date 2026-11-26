@@ -1,0 +1,21 @@
+{# FLOW NOTE: This page requests live paginated AniList results for one genre while preserving the site's card and catalog styling. #}
+{% extends 'base.html' %}
+{% block title %}{{ genre }} Anime | HIANIME{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user.css') }}?v=catalog-home-11">
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user-responsive.css') }}?v=catalog-rail-12">
+{% endblock %}
+{% block content %}
+<main class="genre-catalog-page">
+    <nav class="genre-breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('home') }}">Home</a><span>/</span><span>{{ genre }}</span></nav>
+    <header class="genre-catalog-heading"><p class="catalog-kicker">BROWSE BY GENRE</p><h1>{{ genre }} Anime</h1><p>Lahat ng anime na available sa {{ genre }} genre.</p></header>
+    <nav class="catalog-genres genre-catalog-links" aria-label="Choose another genre">
+        {% for name in anilist_genres %}<a class="{% if name == genre %}selected{% endif %}" href="{{ url_for('genre_catalog', genre=name) }}">{{ name }}</a>{% endfor %}
+    </nav>
+    <section class="anime-section home-feed-section genre-feed" data-anilist-feed data-sort="POPULARITY_DESC" data-genre="{{ genre }}" data-limit="24">
+        <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading {{ genre }} anime…</p></div>
+        <button class="feed-more" type="button" data-feed-more hidden>Load more anime</button>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='home.js') }}?v=catalog-home-15" defer></script>{% endblock %}

@@ -1,0 +1,43 @@
+/* FLOW NOTE: Presentation only; active Flask templates load this admin users stylesheet through the static folder when the matching page is rendered. */
+/* DEBUG NOTE: User management table and edit/confirm dialogs follow the provided Charles AI screenshots. */
+.user-management-title { margin:34px 0 22px; color:#22c6ff; text-align:center; font-size:clamp(28px,4vw,42px); letter-spacing:3px; text-shadow:0 0 18px #13caff82; }
+.user-management-title span { margin-right:10px; }
+.user-search { display:flex; gap:10px; margin:0 0 16px; }
+.user-search input { flex:1; min-width:0; padding:11px 14px; border:1px solid var(--adm-line); border-radius:9px; background:var(--adm-input,#08111e); color:var(--adm-text); }
+.user-search button { padding:0 20px; border:0; border-radius:9px; background:#188cf5; color:#fff; font-weight:700; cursor:pointer; }
+.user-table-panel { padding:0; overflow:hidden; }
+.user-table { width:100%; min-width:980px; border-collapse:collapse; }
+.user-table thead { background:linear-gradient(100deg,#187bf5,#22a8f4); color:#fff; }
+.user-table th { padding:14px 12px; border:0; color:#fff; font-weight:700; }
+.user-table td { padding:15px 12px; border-bottom:1px solid color-mix(in srgb,var(--adm-line),transparent 45%); }
+.user-table tbody tr:hover { background:color-mix(in srgb,var(--adm-card),#1a84ff 8%); }
+.user-table td:nth-child(1),.user-table td:nth-child(2),.user-table td:nth-child(4),.user-table td:nth-child(5) { white-space:nowrap; }
+.user-status-dot,.nav-online-dot { display:inline-block; width:11px; height:11px; margin-right:7px; border-radius:50%; background:#a7b0be; }
+.user-status-dot.is-online,.nav-online-dot { background:#25ce54; }
+.user-table td:has(.is-online) { color:#2edb78; }
+.admin-user-avatar-frame { position:relative; display:inline-grid; width:42px; height:42px; place-items:center; overflow:hidden; border:1px solid var(--adm-line); border-radius:50%; background:#0b1522; vertical-align:middle; }
+.admin-user-avatar-frame img { display:block; width:100%; height:100%; object-fit:cover; }
+.admin-user-avatar-frame .avatar-blocked-stamp { font-size:7px; }
+.user-actions { display:flex; align-items:center; gap:8px; }
+.user-action { min-width:72px; padding:9px 12px; border:0; border-radius:20px; color:#fff; font-weight:700; cursor:pointer; box-shadow:0 5px 14px #168bff2a; }
+.user-action.edit,.user-action.block { background:linear-gradient(110deg,#22b8ff,#1978ff); }
+.user-action.ban { background:#217af4; }
+.user-action.delete { background:#e83737; }
+.user-action:hover { filter:brightness(1.1); transform:translateY(-1px); }
+.empty-users { padding:28px!important; text-align:center; color:var(--adm-muted); }
+.user-back-dashboard { display:inline-flex; margin-top:26px; padding:13px 24px; border-radius:24px; background:linear-gradient(110deg,#e9272d,#b8101c); color:white!important; font-weight:700; text-decoration:none; }
+.user-modal-backdrop[hidden] { display:none; }
+.user-modal-backdrop { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; padding:18px; background:#000b; backdrop-filter:blur(7px); }
+.user-modal { position:relative; width:min(430px,100%); padding:30px; border:1px solid #174156; border-radius:18px; background:#080e19; box-shadow:0 25px 75px #000a; }
+.user-modal h2 { margin:0 0 22px; color:#20c6ff; text-align:center; font-size:23px; letter-spacing:1.5px; }
+.user-modal-close { position:absolute; top:10px; right:15px; border:0; background:none; color:white; font-size:24px; cursor:pointer; }
+.user-modal form { display:grid; gap:14px; }
+.user-modal .user-edit-fields,.user-modal .user-moderation-fields { display:grid; gap:13px; }
+.user-modal .user-edit-fields[hidden],.user-modal .user-moderation-fields[hidden],.user-modal .user-confirm-copy[hidden] { display:none; }
+.user-modal input,.user-modal select { width:100%; min-height:46px; padding:12px 15px; border:1px solid #303744; border-radius:11px; background:#171c26; color:#f4f6fb; }
+.user-modal .user-confirm-copy { margin:0; color:#d6e1ec; line-height:1.55; }
+.user-modal form>button { min-height:47px; border:0; border-radius:11px; background:#20a8f5; color:white; font-weight:800; cursor:pointer; }
+.admin-page.admin-light .user-modal { border-color:#bbcde0; background:#fff; }
+.admin-page.admin-light .user-modal-close,.admin-page.admin-light .user-confirm-copy { color:#26354a; }
+.admin-page.admin-light .user-modal input,.admin-page.admin-light .user-modal select { border-color:#cbd7e5; background:#f2f6fb; color:#18263a; }
+@media(max-width:850px) { .user-table-wrap { overflow-x:auto; } }

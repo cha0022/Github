@@ -1,0 +1,28 @@
+# Local secrets and environment configuration
+.env
+.env.*
+!.env.example
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# Local databases, exports, logs, and runtime files
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.log
+instance/
+
+# User-uploaded media and generated slider assets
+images/anime/*
+!images/anime/.gitkeep
+images/slider/slider_*
+
+# Local editor settings
+.vscode/

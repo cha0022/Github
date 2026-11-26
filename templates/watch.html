@@ -1,0 +1,128 @@
+{# FLOW NOTE: Flask supplies anime, episode, stream, and related-title data; Jinja renders the episode rail, player column, and related rail. #}
+{% extends 'base.html' %}
+{% block title %}{{ anime.title }} - Watch Episode{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/watch_episode.css') }}?v=watch-layout-4-episode-grid">
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user.css') }}?v=catalog-home-11">
+{% endblock %}
+{% block content %}
+<!-- DEBUG NOTE: Original watch_episode.css layout classes are retained; watch.js uses episodePlayer/autoSkip/autoNext IDs. -->
+<main class="watch-page">
+    <section class="watch-heading">
+        <a href="{{ url_for('home') }}">Catalog</a><span aria-hidden="true">/</span>
+        <span>{{ anime.title }}</span><span class="watch-heading-current">Episode {{ episode.episode_number if episode else '—' }}</span>
+    </section>
+
+    <div class="watch-container watch-layout">
+    <aside class="episode-picker watch-episode-sidebar">
+        <header><div><span class="watch-panel-kicker">YOUR QUEUE</span><h2>Episodes</h2></div><span class="episode-count">{{ episodes|length }}</span></header>
+        <label class="episode-filter-wrap" for="episodeFilter"><span aria-hidden="true">⌕</span><input id="episodeFilter" type="search" placeholder="Find episode..."></label>
+        <div class="episode-view-toggle" role="group" aria-label="Episode list style"><button type="button" class="active" data-episode-view="grid" aria-pressed="true">Grid</button><button type="button" data-episode-view="list" aria-pressed="false">List</button></div>
+        <div class="episode-list is-grid">
+            {% for item in episodes %}
+                <a class="episode-button {% if episode and item.episode_number == episode.episode_number %}active{% endif %}" data-episode="{{ item.episode_number }}" data-search="{{ item.title|default('', true) }}" title="Episode {{ item.episode_number }}{% if item.title %} · {{ item.title }}{% endif %}" aria-label="Episode {{ item.episode_number }}{% if item.title %}: {{ item.title }}{% endif %}" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=item.episode_number, source=player_source, server=player_server) }}"><span class="episode-number">{{ '%02d'|format(item.episode_number) }}</span><span class="episode-label">Episode {{ item.episode_number }}{% if item.title %}<small>{{ item.title }}</small>{% endif %}</span><span class="episode-current-mark" aria-hidden="true">▶</span></a>
+            {% else %}<p class="no-episodes">Wala pang episode na nailagay.</p>{% endfor %}
+        </div>
+    </aside>
+    <div class="watch-main-column">
+    <div class="player-wrapper">
+        {% if episode and player_url %}
+            {% if player_kind == 'iframe' %}
+                <iframe
+                    id="externalEpisodePlayer"
+                    class="video-player episode-player"
+                    src="{{ player_url }}"
+                    data-player-source="{{ player_source }}"
+                    data-player-origin="{{ player_origin }}"
+                    data-progress-url="{{ url_for('watch_progress') }}"
+                    data-csrf-token="{{ csrf_token() }}"
+                    data-intro-start="{{ skip.intro_start or '' }}"
+                    data-intro-end="{{ skip.intro_end or '' }}"
+                    data-outro-start="{{ skip.outro_start or '' }}"
+                    data-outro-end="{{ skip.outro_end or '' }}"
+                    {% if user and episode.id|int > 0 %}data-episode-id="{{ episode.id }}"{% endif %}
+                    {% if next_episode %}data-next-url="{{ url_for('watch_episode') }}?anime_id={{ anime.id }}&anilist_id={{ anime.anilist_id or '' }}&episode={{ next_episode.episode_number }}"{% endif %}
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    title="{{ anime.title }} episode {{ episode.episode_number }}"
+                ></iframe>
+                {% if player_source == 'vidrift' %}<div id="vidriftSkipMask" class="vidrift-skip-mask" aria-hidden="true" style="position:absolute;z-index:2147483647;top:70%;right:16px;width:112px;height:52px;background:#05080d;pointer-events:auto"></div>{% endif %}
+            {% else %}
+                <video
+                    id="episodePlayer"
+                    class="video-player episode-player"
+                    controls
+                    playsinline
+                    preload="metadata"
+                    data-progress-url="{{ url_for('watch_progress') }}"
+                    data-csrf-token="{{ csrf_token() }}"
+                    data-intro-start="{{ skip.intro_start or '' }}"
+                    data-intro-end="{{ skip.intro_end or '' }}"
+                    data-outro-start="{{ skip.outro_start or '' }}"
+                    data-outro-end="{{ skip.outro_end or '' }}"
+                    {% if user and episode.id|int > 0 %}data-episode-id="{{ episode.id }}"{% endif %}
+                    data-video-src="{{ media_url(player_url) }}"
+                    data-is-hls="{{ '1' if player_kind == 'hls' else '0' }}"
+                    {% if next_episode %}data-next-url="{{ url_for('watch_episode') }}?anime_id={{ anime.id }}&anilist_id={{ anime.anilist_id or '' }}&episode={{ next_episode.episode_number }}"{% endif %}
+                >
+                    {% if player_kind != 'hls' %}<source src="{{ media_url(player_url) }}">{% endif %}
+                    {% for track in sdk_subtitles %}<track kind="subtitles" src="{{ media_url(track.url) }}" srclang="{{ track.language or 'en' }}" label="{{ track.label or track.language or 'Subtitle' }}"{% if loop.first %} default{% endif %}>{% endfor %}
+                </video>
+            {% endif %}
+        {% else %}
+            <div class="video-unavailable"><h2>Video Unavailable</h2><p>{% if sdk_unavailable and sdk_language == 'dub' %}Walang English dub na maibalik para sa episode na ito. Nilaktawan ang mga server na Sub lang ang available; pumili ng ibang server o Sub.{% elif sdk_unavailable %}Walang video source na naibalik para sa episode na ito. Pumili ng ibang server sa ibaba at subukan ulit.{% else %}Walang mahanap na stream para sa episode na ito. Pumili ng ibang server sa ibaba at subukan ulit.{% endif %}</p></div>
+        {% endif %}
+        <div class="player-controls">
+            {% if previous_episode %}<a class="control-button" title="Previous episode" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=previous_episode.episode_number, source=player_source, server=player_server) }}">|◀</a>{% endif %}
+            {% if next_episode %}<a class="control-button" title="Next episode" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=next_episode.episode_number, source=player_source, server=player_server) }}">▶|</a>{% endif %}
+            <span>Episode {{ episode.episode_number if episode else '—' }}</span><span class="control-spacer"></span>
+            <label class="auto-next-label"><input id="autoNext" type="checkbox" checked> Auto Next</label>
+        </div>
+        <div class="watch-options">
+            <label class="watch-option"><input id="autoSkip" type="checkbox" checked> Auto Skip</label>
+            {% if previous_episode %}<a class="watch-option" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=previous_episode.episode_number, source=player_source, server=player_server) }}">‹ Prev</a>{% endif %}
+            {% if next_episode %}<a class="watch-option" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=next_episode.episode_number, source=player_source, server=player_server) }}">Next ›</a>{% endif %}
+        </div>
+    </div>
+
+    <section class="server-panel">
+        <div class="server-message"><strong>Episode source options</strong><br>Episode {{ episode.episode_number if episode else '—' }}.<br><br>Pumili ng source at language para sa episode na ito.</div>
+        {% if sdk_fallback %}<p class="server-message" role="status">Hindi nagbalik ng video ang {{ requested_source|title }} para sa episode na ito. Ginagamit ang {{ player_source|title }} bilang fallback.</p>{% endif %}
+        <div class="server-content">
+            {% if episode %}<div class="server-row source-row"><div class="server-label">▤ SERVER</div>
+                {% for provider, label in [('animeparadise','HD-1'),('vidrift','HD-2'),('megaplay','HD-3')] %}<a class="server-button {% if player_source == provider %}active{% endif %}" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=episode.episode_number, source=provider, server=player_server) }}">{{ label }}</a>{% endfor %}
+            </div><div class="server-row"><div class="server-label">◎ LANGUAGE</div>{% for language in ['sub','dub'] %}<a class="server-button {% if player_server == language %}active{% endif %}" href="{{ url_for('watch_episode', anime_id=anime.id, anilist_id=anime.anilist_id, episode=episode.episode_number, source=player_source, server=language) }}">{{ language|upper }}</a>{% endfor %}</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="anime-information">
+        {% set poster = anime.card_image or anime.image %}{% if poster %}<img class="anime-poster" src="{{ media_url(poster) }}" alt="{{ anime.title }}">{% endif %}
+        <div class="anime-details"><h1>{{ anime.title }}</h1><p class="episode-name">Episode {{ episode.episode_number if episode else '—' }}{% if episode and episode.title %} - {{ episode.title }}{% endif %}</p><p class="anime-description">{{ anime.description or 'Walang karagdagang detalye.' }}</p></div>
+    </section>
+
+    </div>
+    <aside class="related-panel">
+        <header><span class="watch-panel-kicker">KEEP EXPLORING</span><h2>Related anime</h2></header>
+        <div class="related-list">
+            {% for item in related_anime %}
+                <a class="related-card" href="{{ url_for('watch_episode', anime_id=item.id) }}">
+                    {% set related_poster = item.card_image or item.image %}{% if related_poster %}<img src="{{ media_url(related_poster) }}" alt="" loading="lazy">{% else %}<span class="related-poster-placeholder">✦</span>{% endif %}
+                    <span class="related-copy"><strong>{{ item.title }}</strong><small>{{ item.status or 'Anime' }}</small></span>
+                </a>
+            {% else %}
+                <p class="related-empty">Wala pang ibang title sa catalog.</p>
+            {% endfor %}
+        </div>
+    </aside>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+    {% if player_kind == 'hls' %}
+        <script src="{{ url_for('static', filename='vendor/hls.min.js') }}"></script>
+    {% endif %}
+    <script src="{{ url_for('static', filename='watch.js') }}?v=watch-servers-2" defer></script>
+{% endblock %}
+

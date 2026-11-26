@@ -1,0 +1,1105 @@
+/* FLOW NOTE: Preserved navigation dashboard stylesheet; it contains visual rules only and is not loaded automatically by active Flask templates. */
+/* =========================================================
+                    ROBOTIC NAVIGATION
+              CYBER / AI ADMIN INTERFACE
+              RESPONSIVE + STABLE VERSION
+========================================================= */
+
+
+/* =========================================================
+                    RESET
+========================================================= */
+
+.robot-nav,
+.robot-nav * {
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================================
+                    MAIN NAVIGATION
+========================================================= */
+
+.robot-nav {
+
+    position: fixed;
+
+    top: 10px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: min(1200px, calc(100% - 30px));
+
+    min-height: 58px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 10px 18px;
+
+    background:
+        rgba(5, 8, 18, 0.94);
+
+    border:
+        1px solid
+        rgba(0, 198, 255, 0.10);
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 10px 35px
+        rgba(0, 0, 0, 0.35);
+
+    z-index: 99999;
+
+}
+
+
+/* =========================================================
+                    NAVIGATION LOGO
+========================================================= */
+
+.logo {
+
+    flex-shrink: 0;
+
+    color: #00c6ff;
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    text-decoration: none;
+
+    text-shadow:
+        0 0 10px
+        rgba(0, 198, 255, 0.35);
+
+}
+
+
+/* =========================================================
+                    NAVIGATION LIST
+========================================================= */
+
+.robot-nav > ul {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 0;
+
+    padding: 0;
+
+    list-style: none;
+
+}
+
+
+/* =========================================================
+                    NAVIGATION ITEMS
+========================================================= */
+
+.robot-nav li {
+
+    position: relative;
+
+    list-style: none;
+
+}
+
+
+/* =========================================================
+                    NAVIGATION LINKS
+========================================================= */
+
+.robot-nav a {
+
+    display: flex;
+
+    align-items: center;
+
+    min-height: 40px;
+
+    padding:
+        8px 12px;
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+
+    border-radius: 12px;
+
+    transition:
+        color 0.18s ease,
+        background 0.18s ease;
+
+}
+
+
+/* =========================================================
+                    NAVIGATION HOVER
+========================================================= */
+
+.robot-nav > ul > li > a:hover {
+
+    color: #00c6ff;
+
+    background:
+        rgba(0, 198, 255, 0.08);
+
+}
+
+
+/* =========================================================
+                    USER DROPDOWN
+========================================================= */
+
+#userMenu {
+
+    position: absolute;
+
+    top: calc(100% + 8px);
+
+    left: 0;
+
+    width: 190px;
+
+    display: none;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    margin: 0;
+
+    padding: 8px;
+
+    background:
+        #111827;
+
+    border:
+        1px solid
+        rgba(0, 198, 255, 0.12);
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 15px 40px
+        rgba(0, 0, 0, 0.55);
+
+    z-index: 100000;
+
+}
+
+
+/*
+    Kapag JavaScript nag-set ng display:flex,
+    dropdown remains vertical.
+*/
+
+#userMenu.active {
+
+    display: flex;
+
+}
+
+
+/* =========================================================
+                    DROPDOWN LINKS
+========================================================= */
+
+#userMenu a {
+
+    width: 100%;
+
+    min-height: 38px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding:
+        9px 12px;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    border-radius: 10px;
+
+}
+
+
+/* =========================================================
+                    DROPDOWN HOVER
+========================================================= */
+
+#userMenu a:hover {
+
+    color: #00c6ff;
+
+    background:
+        rgba(0, 198, 255, 0.12);
+
+}
+
+
+/* =========================================================
+                    DROPDOWN LIST ITEMS
+========================================================= */
+
+#userMenu li {
+
+    width: 100%;
+
+    list-style: none;
+
+}
+
+
+/* =========================================================
+                    DARK / LIGHT MODE BUTTON
+========================================================= */
+
+.mode-btn {
+
+    flex-shrink: 0;
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background:
+        #00c6ff;
+
+    color: #00131c;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 0 15px
+        rgba(0, 198, 255, 0.18);
+
+    transition:
+        transform 0.18s ease,
+        filter 0.18s ease;
+
+}
+
+
+.mode-btn:hover {
+
+    transform:
+        translateY(-2px);
+
+    filter:
+        brightness(1.1);
+
+}
+
+
+/* =========================================================
+                    MOBILE MENU BUTTON
+========================================================= */
+
+.menu-toggle {
+
+    display: none;
+
+    width: 42px;
+    height: 42px;
+
+    align-items: center;
+    justify-content: center;
+
+    color: #ffffff;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+    border-radius: 12px;
+
+    user-select: none;
+
+}
+
+
+/* =========================================================
+                    MOBILE MENU BUTTON HOVER
+========================================================= */
+
+.menu-toggle:hover {
+
+    color: #00c6ff;
+
+    background:
+        rgba(0, 198, 255, 0.08);
+
+}
+
+
+/* =========================================================
+                    LIGHT MODE
+========================================================= */
+
+.light {
+
+    background:
+        #ffffff;
+
+}
+
+
+/* =========================================================
+                    LIGHT NAVIGATION
+========================================================= */
+
+.light .robot-nav {
+
+    background:
+        rgba(235, 235, 235, 0.96);
+
+    border-color:
+        rgba(0, 0, 0, 0.08);
+
+    box-shadow:
+        0 10px 35px
+        rgba(0, 0, 0, 0.12);
+
+}
+
+
+.light .robot-nav a {
+
+    color:
+        #111111;
+
+}
+
+
+.light .robot-nav > ul > li > a:hover {
+
+    color:
+        #008cff;
+
+    background:
+        rgba(0, 140, 255, 0.08);
+
+}
+
+
+/* =========================================================
+                    LIGHT DROPDOWN
+========================================================= */
+
+.light #userMenu {
+
+    background:
+        #ffffff;
+
+    border-color:
+        rgba(0, 0, 0, 0.10);
+
+    box-shadow:
+        0 15px 40px
+        rgba(0, 0, 0, 0.18);
+
+}
+
+
+.light #userMenu a {
+
+    color:
+        #111111;
+
+}
+
+
+.light #userMenu a:hover {
+
+    color:
+        #008cff;
+
+    background:
+        #eeeeee;
+
+}
+
+
+/* =========================================================
+                    ACTIVE USERS OVERLAY
+========================================================= */
+
+.online-popup {
+
+    position: fixed;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(0, 0, 0, 0.72);
+
+    backdrop-filter:
+        blur(6px);
+
+    z-index: 1000000;
+
+}
+
+
+/* =========================================================
+                    ONLINE USERS WINDOW
+========================================================= */
+
+.online-window {
+
+    position: relative;
+
+    width:
+        min(420px, 100%);
+
+    max-height:
+        80vh;
+
+    overflow-y: auto;
+
+    padding:
+        30px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #151a29,
+            #090c14
+        );
+
+    color: #ffffff;
+
+    border:
+        1px solid
+        rgba(0, 198, 255, 0.20);
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 20px 60px
+        rgba(0, 0, 0, 0.65);
+
+}
+
+
+/* =========================================================
+                    ONLINE CLOSE BUTTON
+========================================================= */
+
+.online-close {
+
+    position: absolute;
+
+    top: 12px;
+    right: 16px;
+
+    width: 35px;
+    height: 35px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    color: #ffffff;
+
+    font-size: 27px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    border-radius: 50%;
+
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
+
+}
+
+
+.online-close:hover {
+
+    color:
+        #00c6ff;
+
+    background:
+        rgba(255, 255, 255, 0.07);
+
+}
+
+
+/* =========================================================
+                    ONLINE TITLE
+========================================================= */
+
+.online-window h2 {
+
+    margin:
+        0 35px 20px 0;
+
+    color:
+        #00c6ff;
+
+    font-size:
+        22px;
+
+    text-shadow:
+        0 0 10px
+        rgba(0, 198, 255, 0.25);
+
+}
+
+
+/* =========================================================
+                    ONLINE USER ITEM
+========================================================= */
+
+.online-user-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding:
+        12px;
+
+    margin-bottom:
+        10px;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.04);
+
+    border-radius:
+        12px;
+
+}
+
+
+/* =========================================================
+                    ONLINE USER AVATAR
+========================================================= */
+
+.online-user-avatar {
+
+    flex-shrink: 0;
+
+    width: 45px;
+    height: 45px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    border:
+        2px solid
+        rgba(0, 198, 255, 0.30);
+
+}
+
+
+/* =========================================================
+                    ONLINE USER INFO
+========================================================= */
+
+.online-user-info {
+
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+}
+
+
+.online-user-info span {
+
+    font-size:
+        13px;
+
+    color:
+        #00ff44;
+
+}
+
+
+/* =========================================================
+                    NO ONLINE USERS
+========================================================= */
+
+.no-online-users {
+
+    padding:
+        20px;
+
+    text-align:
+        center;
+
+    color:
+        #999999;
+
+}
+
+
+/* =========================================================
+                    TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .robot-nav {
+
+        width:
+            calc(100% - 24px);
+
+        padding:
+            9px 14px;
+
+    }
+
+
+    .logo {
+
+        font-size:
+            20px;
+
+    }
+
+
+    .robot-nav > ul {
+
+        gap:
+            3px;
+
+    }
+
+
+    .robot-nav a {
+
+        padding:
+            8px 9px;
+
+        font-size:
+            13px;
+
+    }
+
+}
+
+
+/* =========================================================
+                    MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .robot-nav {
+
+        top:
+            8px;
+
+        width:
+            calc(100% - 20px);
+
+        min-height:
+            58px;
+
+        padding:
+            8px 10px;
+
+        border-radius:
+            17px;
+
+    }
+
+
+    /* -----------------------------------------------
+                    LOGO
+    ------------------------------------------------ */
+
+    .logo {
+
+        font-size:
+            18px;
+
+    }
+
+
+    /* -----------------------------------------------
+                    MOBILE MENU BUTTON
+    ------------------------------------------------ */
+
+    .menu-toggle {
+
+        display:
+            flex;
+
+        margin-left:
+            auto;
+
+        margin-right:
+            5px;
+
+    }
+
+
+    /* -----------------------------------------------
+                    MOBILE NAV LIST
+    ------------------------------------------------ */
+
+    .robot-nav > ul {
+
+        position: absolute;
+
+        top:
+            calc(100% + 8px);
+
+        left:
+            0;
+
+        width:
+            100%;
+
+        display:
+            none;
+
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
+
+        gap:
+            4px;
+
+        padding:
+            8px;
+
+        background:
+            #111827;
+
+        border:
+            1px solid
+            rgba(0, 198, 255, 0.12);
+
+        border-radius:
+            16px;
+
+        box-shadow:
+            0 15px 40px
+            rgba(0, 0, 0, 0.55);
+
+    }
+
+
+    /* -----------------------------------------------
+                    OPEN MOBILE MENU
+    ------------------------------------------------ */
+
+    .robot-nav > ul.active {
+
+        display:
+            flex;
+
+    }
+
+
+    /* -----------------------------------------------
+                    MOBILE LINKS
+    ------------------------------------------------ */
+
+    .robot-nav > ul > li {
+
+        width:
+            100%;
+
+    }
+
+
+    .robot-nav > ul > li > a {
+
+        width:
+            100%;
+
+        min-height:
+            42px;
+
+        padding:
+            10px 13px;
+
+    }
+
+
+    /* -----------------------------------------------
+                    MOBILE USER DROPDOWN
+    ------------------------------------------------ */
+
+    #userMenu {
+
+        position:
+            static;
+
+        width:
+            100%;
+
+        margin-top:
+            4px;
+
+        padding:
+            5px;
+
+        background:
+            rgba(0, 0, 0, 0.25);
+
+        border:
+            none;
+
+        box-shadow:
+            none;
+
+    }
+
+
+    #userMenu.active {
+
+        display:
+            flex;
+
+    }
+
+
+    #userMenu a {
+
+        padding:
+            9px 12px;
+
+    }
+
+
+    /* -----------------------------------------------
+                    LIGHT MODE MOBILE MENU
+    ------------------------------------------------ */
+
+    .light .robot-nav > ul {
+
+        background:
+            #ffffff;
+
+        border-color:
+            rgba(0, 0, 0, 0.08);
+
+    }
+
+
+    .light #userMenu {
+
+        background:
+            #f3f3f3;
+
+    }
+
+
+    /* -----------------------------------------------
+                    ONLINE WINDOW
+    ------------------------------------------------ */
+
+    .online-popup {
+
+        padding:
+            15px;
+
+    }
+
+
+    .online-window {
+
+        width:
+            100%;
+
+        max-height:
+            85vh;
+
+        padding:
+            25px 18px;
+
+        border-radius:
+            17px;
+
+    }
+
+}
+
+
+/* =========================================================
+                    SMALL PHONE
+========================================================= */
+
+@media (max-width: 400px) {
+
+    .robot-nav {
+
+        width:
+            calc(100% - 14px);
+
+        top:
+            6px;
+
+        padding:
+            7px 8px;
+
+        border-radius:
+            15px;
+
+    }
+
+
+    .logo {
+
+        font-size:
+            16px;
+
+    }
+
+
+    .menu-toggle {
+
+        width:
+            38px;
+
+        height:
+            38px;
+
+        font-size:
+            25px;
+
+    }
+
+
+    .mode-btn {
+
+        width:
+            38px;
+
+        height:
+            38px;
+
+        font-size:
+            16px;
+
+    }
+
+
+    .online-window {
+
+        padding:
+            23px 15px;
+
+    }
+
+
+    .online-window h2 {
+
+        font-size:
+            19px;
+
+    }
+
+}
+
+
+/* =========================================================
+                    VERY SMALL PHONE
+========================================================= */
+
+@media (max-width: 320px) {
+
+    .robot-nav {
+
+        width:
+            calc(100% - 10px);
+
+    }
+
+
+    .logo {
+
+        font-size:
+            15px;
+
+    }
+
+}
+
+
+/* =========================================================
+                    REDUCE MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .robot-nav *,
+    .online-window * {
+
+        transition:
+            none !important;
+
+        animation:
+            none !important;
+
+    }
+
+}
