@@ -35,7 +35,8 @@ APP_ROOT = Path(__file__).resolve().parent
 load_dotenv(APP_ROOT / ".env")
 configured_media_root = os.getenv("SITE_MEDIA_ROOT")
 MEDIA_ROOT = Path(configured_media_root).resolve() if configured_media_root else (APP_ROOT.parent if (APP_ROOT.parent / "images").is_dir() else APP_ROOT)
-ANIME_SDK_URL = os.getenv("ANIME_SDK_URL", "http://127.0.0.1:3000").rstrip("/")
+IS_RENDER = os.getenv("RENDER", "").strip().lower() == "true"
+ANIME_SDK_URL = os.getenv("ANIME_SDK_URL", "" if IS_RENDER else "http://127.0.0.1:3000").rstrip("/")
 ANIME_SDK_TOKEN = os.getenv("ANIME_SDK_TOKEN", "")
 ANIME_SDK_PUBLIC_PROXY_BASE = os.getenv("ANIME_SDK_PUBLIC_PROXY_BASE", "http://127.0.0.1:5000/proxy").rstrip("/")
 ANILIST_GRAPHQL_URL = os.getenv("ANILIST_GRAPHQL_URL", "https://graphql.anilist.co").rstrip("/")
@@ -65,17 +66,17 @@ def get_db():
     """Open one database connection per request; close it in teardown below."""
     if "db" not in g:
         connection_options = dict(
-            host=os.getenv("DB_HOST", "127.0.0.1"),
-            port=int(os.getenv("DB_PORT", "3306")),
-            user=os.getenv("DB_USER", "root"),
+            host=os.getenv("DB_HOST", "" if IS_RENDER else "127.0.0.1"),
+            port=int(os.getenv("DB_PORT", "4000" if IS_RENDER else "3306")),
+            user=os.getenv("DB_USER", "" if IS_RENDER else "root"),
             password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "developer_db"),
+            database=os.getenv("DB_NAME", "hianime" if IS_RENDER else "developer_db"),
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
             init_command="SET time_zone = '+00:00'",
             autocommit=False,
         )
-        tls_enabled = os.getenv("DB_SSL", "0").strip().lower() in {"1", "true", "yes", "on"}
+        tls_enabled = os.getenv("DB_SSL", "1" if IS_RENDER else "0").strip().lower() in {"1", "true", "yes", "on"}
         if tls_enabled:
             ca_path = os.getenv("DB_SSL_CA", "").strip() or None
             tls_context = ssl.create_default_context(cafile=ca_path)
@@ -2161,12 +2162,12 @@ def admin_logout():
 def database_error(error):
     # Do not show connection strings or SQL details to site visitors.
     app.logger.error("MySQL operation failed: %s", error)
-    return render_template("error.html", message="Hindi makakonekta sa developer_db. Tingnan kung naka-start ang MySQL sa XAMPP at tama ang .env settings."), 503
+    return render_template("error.html", message="Hindi makakonekta sa database. Suriin ang DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, at DB_SSL sa Render Environment."), 503
 
 
 @app.cli.command("db-check")
 def db_check():
-    """Read-only diagnostic: confirm that XAMPP MySQL and developer_db are reachable."""
+    """Read-only diagnostic: confirm that the configured MySQL-compatible database is reachable."""
     result = row("SELECT DATABASE() AS db_name, COUNT(*) AS anime_count FROM anime")
     click.echo(f"Connected to {result['db_name']}; anime rows: {result['anime_count']}.")
 
@@ -2174,4 +2175,3 @@ def db_check():
 if __name__ == "__main__":
     # Flask runs separately from Apache; XAMPP is used here for MySQL only.
     app.run(host="127.0.0.1", port=5000, debug=True)
-
