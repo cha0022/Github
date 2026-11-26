@@ -1,8 +1,0 @@
-{# FLOW NOTE: Flask supplies page data to this anime card template; Jinja renders its page blocks and shared layout/partials. #}
-<article class="anime-card">
-    <a href="{{ url_for('watch_episode') }}?anime_id={{ anime.id }}">
-        {% set poster = anime.card_image or anime.image %}
-        {% if poster %}<img loading="lazy" src="{{ media_url(poster) }}" alt="">{% endif %}
-        <span class="anime-status">{{ anime.status or 'Anime' }}</span><h3>{{ anime.title }}</h3>
-    </a>
-</article>
