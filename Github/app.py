@@ -1278,11 +1278,51 @@ def watch_episode():
                     anime_id = requested_anilist_id
                     anime = local
             if anime is None:
-                result = anilist_request(
-                    f"query ($id:Int!){{Media(id:$id,type:ANIME){{{ANILIST_HERO_FIELDS}}}}}",
-                    {"id": requested_anilist_id}, timeout=12,
-                )
-                media = result.get("Media")
+                # If this ID was just displayed from AniList, reuse the cached
+                # catalog record instead of making a second network request.
+                # This keeps the detail page working when AniList rate-limits
+                # the follow-up request from the hosting server.
+                media = None
+                now = time.monotonic()
+                for expires_at, cached_items, _has_next in _anilist_catalog_cache.values():
+                    if expires_at <= now:
+                        continue
+                    media = next(
+                        (item for item in cached_items if int(item.get("id") or 0) == requested_anilist_id),
+                        None,
+                    )
+                    if media:
+                        break
+                if media is None:
+                    # Trending cards use a compact cache shape, so adapt the
+                    # cached title/artwork into the fields needed by the watch page.
+                    for expires_at, cached_items in _anilist_trending_cache.values():
+                        if expires_at <= time.time():
+                            continue
+                        cached = next(
+                            (item for item in cached_items if int(item.get("anilist_id") or item.get("id") or 0) == requested_anilist_id),
+                            None,
+                        )
+                        if cached:
+                            state = {"Ongoing": "RELEASING", "Completed": "FINISHED", "Upcoming": "NOT_YET_RELEASED", "Hiatus": "HIATUS"}.get(cached.get("status"), "RELEASING")
+                            media = {
+                                "id": requested_anilist_id,
+                                "title": {"english": cached.get("title")},
+                                "description": "",
+                                "coverImage": {"extraLarge": cached.get("image"), "large": cached.get("image_fallback") or cached.get("image")},
+                                "bannerImage": cached.get("banner") or "",
+                                "genres": [],
+                                "status": state,
+                                "episodes": cached.get("episodes"),
+                                "startDate": {"year": cached.get("year")},
+                            }
+                            break
+                if media is None:
+                    result = anilist_request(
+                        f"query ($id:Int!){{Media(id:$id,type:ANIME){{{ANILIST_HERO_FIELDS}}}}}",
+                        {"id": requested_anilist_id}, timeout=12,
+                    )
+                    media = result.get("Media")
                 if media:
                     titles = media.get("title") or {}
                     cover = media.get("coverImage") or {}
