@@ -1341,6 +1341,7 @@ def watch_episode():
                         "genres": ", ".join(media.get("genres") or []),
                         "status": "Ongoing" if state == "RELEASING" else "Completed" if state == "FINISHED" else "Upcoming" if state == "NOT_YET_RELEASED" else "Hiatus",
                         "release_date": start_date.get("year"),
+                        "episode_count": int(media.get("episodes") or 0),
                     }
         except (pymysql.MySQLError, requests.RequestException, ValueError, TypeError) as error:
             app.logger.info("Could not open AniList title %s: %s", requested_anilist_id, error)
@@ -1372,7 +1373,7 @@ def watch_episode():
             "title": unit.get("title") or unit.get("name") or "",
             "video": f"sdk-catalog:{unit.get('provider', catalog_provider)}:{unit.get('id', '')}",
         } for unit in sdk_units]
-        if source in sdk_providers or not episodes:
+        if source in sdk_providers or (not episodes and source not in direct_providers):
             episodes = sdk_episodes
             sdk_catalog_anime = True
             source = catalog_provider
@@ -1380,6 +1381,22 @@ def watch_episode():
             present_numbers = {int(item.get("episode_number") or 0) for item in episodes}
             episodes.extend(item for item in sdk_episodes if item["episode_number"] not in present_numbers)
             episodes.sort(key=lambda item: int(item.get("episode_number") or 0))
+    # AniList supplies the episode count but no video stream. When the SDK
+    # bridge has no episode list, still create selectable episode numbers so
+    # the existing Vidrift embed route can build its /anilist/{id}/{episode} URL.
+    episode_count = int(anime.get("episode_count") or 0)
+    if not episodes and episode_count > 0 and (source == "vidrift" or not ANIME_SDK_URL):
+        episodes = [{
+            "id": 0,
+            "anime_id": anime_id,
+            "episode_number": number,
+            "title": f"Episode {number}",
+            "video": "",
+        } for number in range(1, min(episode_count, 1000) + 1)]
+        if not source:
+            source = "vidrift"
+    if not source and not ANIME_SDK_URL and (anime.get("anilist_id") or requested_anilist_id):
+        source = "vidrift"
     episode = next((item for item in episodes if item["episode_number"] == episode_number), None)
     if episode is None and "episode" not in request.args and episodes:
         episode = episodes[0]
