@@ -1,0 +1,36 @@
+{# FLOW NOTE: Flask supplies page data to this base template; Jinja renders its page blocks and shared layout/partials. #}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Admin | HIANIME{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-shared.css') }}">
+    {% block admin_styles %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='site-polish.css') }}?v=anilist-1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='responsive-overrides.css') }}?v=v23-responsive-2">
+</head>
+<body class="admin-page">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-stack" role="status">
+                {% for category, message in messages %}
+                    <p class="flash {{ category }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+    <div class="active-users-backdrop" id="activeUsersModal" hidden>
+        <section class="active-users-dialog" role="dialog" aria-modal="true" aria-labelledby="activeUsersTitle">
+            <button type="button" class="active-users-close" aria-label="Close">×</button>
+            <h2 id="activeUsersTitle"><span></span> ACTIVE USERS</h2>
+            <div id="activeUsersList" class="active-users-list"><p>Loading active users…</p></div>
+        </section>
+    </div>
+    {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='admin.js') }}?v=crud-temp-block-1" defer></script>
+</body>
+</html>

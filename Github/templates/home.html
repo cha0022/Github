@@ -1,0 +1,103 @@
+{# FLOW NOTE: Flask supplies page data to this home template; Jinja renders its page blocks and shared layout/partials. #}
+{% extends 'base.html' %}
+{% block title %}HIANIME | Anime Catalog{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user.css') }}?v=catalog-home-17">
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user-responsive.css') }}?v=catalog-rail-17">
+{% endblock %}
+{% block content %}
+<!-- FLOW NOTE: AniList supplies current anime artwork, search results, and paginated genre/status catalog cards; the existing AniKoto-inspired presentation stays in these templates and styles. -->
+<main class="catalog-page" id="home">
+    <section class="hero-slider" id="home" aria-label="Featured anime" {% if homepage_slides|length < 2 %}data-anilist-fallback="1"{% endif %}>
+        {% for anime in homepage_slides %}
+            <article class="slide{% if loop.first %} active{% endif %} anilist-slide" data-slide="{{ loop.index0 }}">
+                {% set banner = anime.slider_image or anime.banner_image %}
+                {% if banner %}<img class="slide-image" src="{{ media_url(banner) }}" data-fallbacks='{{ anime.image_fallbacks|default([], true)|tojson }}' alt="Artwork for {{ anime.title }}">{% endif %}
+                <div class="content">
+                    <span class="hero-category">{{ anime.category or 'Featured anime' }}</span>
+                    <h1>{{ anime.title }}</h1>
+                    <p>{{ (anime.description or 'Panoorin ang mga episode ng anime na ito.')|striptags|truncate(260, True, '…') }}</p>
+                    <span class="hero-source">ANILIST{% if anime.score %} · ★ {{ '%.2f'|format(anime.score|float) }}{% endif %}</span>
+                    <a class="watch-now" href="{{ url_for('watch_episode', anilist_id=anime.anilist_id) if anime.anilist_id else '#latest-anime' }}">Watch Now</a>
+                </div>
+            </article>
+        {% endfor %}
+        <article class="slide{% if not homepage_slides %} active{% endif %}" data-fallback-slide {% if homepage_slides %}hidden{% endif %}><img class="slide-image" src="{{ media_url('images/wallpaper.jpeg') }}" alt="Anime artwork"><div class="content"><h1>Discover your next anime.</h1><p>Loading trending and new releases from AniList…</p><a class="watch-now" href="#latest-anime">Browse Anime</a></div></article>
+    </section>
+
+    <div class="home-feed-layout">
+        <div class="home-feed-main">
+            {% if continue_watching %}
+            <section class="anime-section home-feed-section" id="continue-watching">
+                <header><h2>Continue Watching</h2><span class="catalog-live"><i></i> Your list</span></header>
+                <div class="anime-grid">
+                    {% for anime in continue_watching %}
+                    <article class="anime-card"><a class="anime-card-link" href="{{ url_for('watch_episode', anime_id=anime.id, episode=anime.episode_number) }}">
+                        {% set poster = anime.card_image or anime.image %}{% if poster %}<img loading="lazy" src="{{ media_url(poster) }}" alt="Poster for {{ anime.title }}">{% endif %}
+                        <span class="anime-status">EP {{ anime.episode_number }}</span><h3>{{ anime.title }}</h3><small class="catalog-card-meta">{{ anime.progress|default(0)|int }}% watched</small>
+                        <span class="anime-hover-info"><strong>{{ anime.title }}</strong><small class="anime-hover-rating">Episode {{ anime.episode_number }} · {{ anime.progress|default(0)|int }}% watched</small><span class="anime-hover-description">{{ anime.description|default('Balikan ang huling pinanood mong episode.', true)|striptags|truncate(220, true, '…') }}</span><span class="anime-hover-action">▶  Continue watching</span></span>
+                        <span class="continue-card-progress" aria-label="{{ anime.progress|default(0)|int }} percent watched"><span style="width: {{ anime.progress|default(0)|int }}%"></span></span>
+                    </a></article>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="anime-section home-feed-section" id="latest-episode" data-anilist-feed data-sort="UPDATED_AT_DESC" data-status="RELEASING" data-limit="12" data-server="sub">
+                <header class="home-feed-heading"><div><p class="catalog-kicker">LIVE FROM ANILIST</p><h2>Latest Episode</h2></div><nav class="feed-tabs" aria-label="Latest episode filters"><button class="active" type="button" data-episode-filter="all">All</button><button type="button" data-episode-filter="sub">Sub</button><button type="button" data-episode-filter="dub">Dub</button><button type="button" data-episode-filter="trending">Trending</button><button type="button" data-episode-filter="random">Random</button></nav><nav class="episode-carousel-controls" aria-label="Latest episode carousel"><button type="button" data-episode-scroll="left" aria-label="Previous anime">‹</button><button type="button" data-episode-scroll="right" aria-label="Next anime">›</button></nav></header>
+                <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading anime cards…</p></div>
+            </section>
+
+            <section class="anime-section home-feed-section" id="trending-anime" data-anilist-feed data-sort="TRENDING_DESC" data-limit="12">
+                <header class="home-feed-heading"><h2>Trending Anime</h2><a class="view-more-link" href="{{ url_for('anilist_catalog_page', category='trending') }}">See more →</a></header>
+                <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading anime cards…</p></div>
+            </section>
+
+            <section class="anime-section home-feed-section" id="upcoming-anime" data-anilist-feed data-sort="START_DATE_DESC" data-status="NOT_YET_RELEASED" data-limit="12">
+                <header class="home-feed-heading"><h2>Upcoming Anime</h2><a class="view-more-link" href="{{ url_for('anilist_catalog_page', category='upcoming') }}">See more →</a></header>
+                <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading upcoming anime…</p></div>
+            </section>
+
+            <section class="release-collections" aria-label="Anime releases and updates">
+                <section class="anime-section home-feed-section release-collection" id="new-releases" data-anilist-feed data-sort="START_DATE_DESC" data-status="RELEASING" data-limit="5">
+                    <header class="home-feed-heading"><h2>New Release</h2><a class="view-more-link" aria-label="See more new releases" href="{{ url_for('anilist_catalog_page', category='latest') }}">→</a></header>
+                    <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading…</p></div>
+                </section>
+                <section class="anime-section home-feed-section release-collection" id="newly-added" data-anilist-feed data-sort="ID_DESC" data-limit="5">
+                    <header class="home-feed-heading"><h2>New Added</h2><a class="view-more-link" aria-label="See more newly added anime" href="{{ url_for('anilist_catalog_page', category='new') }}">→</a></header>
+                    <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading…</p></div>
+                </section>
+                <section class="anime-section home-feed-section release-collection" id="just-completed" data-anilist-feed data-sort="END_DATE_DESC" data-status="FINISHED" data-limit="5">
+                    <header class="home-feed-heading"><h2>Just Completed</h2><a class="view-more-link" aria-label="See more completed anime" href="{{ url_for('anilist_catalog_page', category='completed') }}">→</a></header>
+                    <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading…</p></div>
+                </section>
+            </section>
+
+            <section class="weekly-schedule" data-anilist-schedule>
+                <header class="weekly-schedule-heading"><div><p class="catalog-kicker">UPCOMING EPISODES</p><h2>Estimated Schedule</h2></div><span data-schedule-now></span></header>
+                <nav class="schedule-days" aria-label="Choose schedule day" data-schedule-days></nav>
+                <div class="schedule-items" data-schedule-items aria-live="polite"><p class="catalog-message">Loading schedule…</p></div>
+            </section>
+        </div>
+
+        <aside class="home-feed-sidebar">
+            <section class="top-anime-panel trending-anime-panel" data-anilist-trending data-source="anilist" data-period="day" data-limit="10">
+                <header class="trending-panel-header">
+                    <h2>Top anime</h2>
+                    <div class="trending-period-tabs" role="tablist" aria-label="Trending period">
+                        <button class="active" type="button" role="tab" aria-selected="true" data-trend-period="day">Day</button>
+                        <button type="button" role="tab" aria-selected="false" data-trend-period="week">Week</button>
+                        <button type="button" role="tab" aria-selected="false" data-trend-period="month">Month</button>
+                    </div>
+                </header>
+                <a class="trending-spotlight" data-trend-spotlight hidden></a>
+                <div class="top-anime-list feed-results anime-grid" aria-live="polite"><p class="catalog-message">Loading trending anime…</p></div>
+                <a class="view-more-link trending-see-more" href="{{ url_for('anilist_catalog_page', category='trending') }}">See more trending →</a>
+            </section>
+        </aside>
+    </div>
+    <div id="watch-together" hidden></div>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='home.js') }}?v=catalog-home-21" defer></script>{% endblock %}
+

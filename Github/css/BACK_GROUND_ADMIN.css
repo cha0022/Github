@@ -1,0 +1,538 @@
+/* FLOW NOTE: Preserved BACK GROUND ADMIN stylesheet; it contains visual rules only and is not loaded automatically by active Flask templates. */
+/*==================================================
+        ROBOTIC CODE BACKGROUND
+===================================================*/
+
+
+body {
+
+    margin: 0;
+
+    background: #020617;
+
+    color: white;
+
+}
+
+
+
+
+
+
+.code-background {
+
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+
+    width: 100%;
+
+    height: 100%;
+
+
+    z-index: -1;
+
+
+    overflow: hidden;
+
+
+}
+
+
+
+
+.code-background span {
+
+
+    position: absolute;
+
+
+    color: #00c6ff;
+
+
+    opacity: .12;
+
+
+    font-family:
+
+        "Courier New",
+        monospace;
+
+
+    font-size: 25px;
+
+
+    animation: codeFloat 15s linear infinite;
+
+
+}
+
+
+
+
+
+.code-background span:nth-child(1) {
+
+    top: 10%;
+
+    left: 5%;
+
+}
+
+
+
+.code-background span:nth-child(2) {
+
+    top: 25%;
+
+    left: 60%;
+
+}
+
+
+
+.code-background span:nth-child(3) {
+
+    top: 50%;
+
+    left: 20%;
+
+}
+
+
+
+.code-background span:nth-child(4) {
+
+    top: 70%;
+
+    left: 70%;
+
+}
+
+
+
+.code-background span:nth-child(5) {
+
+    top: 85%;
+
+    left: 15%;
+
+}
+
+
+
+.code-background span:nth-child(6) {
+
+    top: 40%;
+
+    left: 80%;
+
+}
+
+
+
+.code-background span:nth-child(7) {
+
+    top: 15%;
+
+    left: 40%;
+
+}
+
+
+
+
+
+@keyframes codeFloat {
+
+
+    from {
+
+
+        transform:
+
+            translateY(100px) rotate(-10deg);
+
+
+    }
+
+
+    to {
+
+
+        transform:
+
+            translateY(-100px) rotate(10deg);
+
+
+    }
+
+
+}
+
+/*==================================================
+        FLOATING AI ROBOT TERMINAL
+==================================================*/
+
+
+.ai-terminal {
+
+
+    position: fixed;
+
+
+    right: 30px;
+
+    bottom: 30px;
+
+
+    width: 320px;
+
+
+    background:
+
+        rgba(0, 0, 0, .75);
+
+
+    backdrop-filter: blur(15px);
+
+
+    border: 1px solid #00c6ff;
+
+
+    border-radius: 20px;
+
+
+    padding: 20px;
+
+
+    color: #00ff88;
+
+
+    font-family: "Courier New";
+
+
+    box-shadow:
+
+
+        0 0 25px #00c6ff;
+
+
+    animation: floatAI 4s ease-in-out infinite;
+
+
+    z-index: 9999;
+
+
+}
+
+
+
+
+
+.ai-header {
+
+
+    color: #00c6ff;
+
+
+    font-size: 20px;
+
+
+    font-weight: bold;
+
+
+    border-bottom: 1px solid #00c6ff;
+
+
+    padding-bottom: 10px;
+
+
+}
+
+
+
+
+
+.online {
+
+
+    float: right;
+
+
+    color: #00ff00;
+
+
+    font-size: 14px;
+
+
+}
+
+
+
+
+#aiText {
+
+
+    margin-top: 15px;
+
+
+    line-height: 25px;
+
+
+    max-height: 200px;
+
+
+    overflow-y: auto;
+
+
+}
+
+
+
+/*==================================================
+        FLOAT ANIMATION
+==================================================*/
+
+
+@keyframes floatAI {
+
+
+    0% {
+
+        transform: translateY(0px);
+
+    }
+
+
+    50% {
+
+        transform: translateY(-15px);
+
+    }
+
+
+    100% {
+
+        transform: translateY(0px);
+
+    }
+
+
+}
+
+/*==================================================
+        AI PROFILE FLOATING WINDOW
+==================================================*/
+
+
+.profile-popup {
+
+
+
+
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, .65);
+
+    backdrop-filter: blur(8px);
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 99999;
+
+}
+
+
+
+
+
+
+
+
+/*==================================================
+        PROFILE POPUP WINDOW
+==================================================*/
+
+.profile-window {
+
+    position: relative;
+
+    width: 50vw;
+
+    max-width: 550px;
+
+
+    height: 90vh;
+
+    max-height: 850px;
+
+
+    background: rgba(15, 23, 42, .92);
+
+
+    backdrop-filter: blur(15px);
+
+
+    border-radius: 35px;
+
+
+    overflow: hidden;
+
+
+    box-shadow:
+        0 0 35px rgba(0, 198, 255, .5);
+
+
+    animation: profileOpen .3s ease;
+}
+
+/*==================================================
+        MOBILE RESPONSIVE
+==================================================*/
+
+
+
+@keyframes profileOpen {
+
+    from {
+
+        transform: scale(.8);
+
+        opacity: 0;
+
+    }
+
+
+    to {
+
+        transform: scale(1);
+
+        opacity: 1;
+
+    }
+
+}
+
+
+
+
+
+/*==================================================
+        IFRAME PROFILE CONTENT
+==================================================*/
+
+
+.profile-window iframe {
+
+    width: 100%;
+
+    height: 100%;
+
+    border: none;
+
+}
+
+
+
+
+
+
+/*==================================================
+        CLOSE BUTTON
+==================================================*/
+
+
+.profile-close {
+
+    position: absolute;
+
+    top: 15px;
+
+    right: 15px;
+
+
+    width: 40px;
+
+    height: 40px;
+
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+
+    background: rgba(0, 0, 0, .6);
+
+
+    border-radius: 50%;
+
+
+    color: white;
+
+
+    font-size: 28px;
+
+
+    cursor: pointer;
+
+
+    z-index: 10000;
+
+}
+
+
+
+.profile-close:hover {
+
+    background: #00c6ff;
+
+    color: black;
+
+}
+
+
+
+
+
+/*==================================================
+        MOBILE RESPONSIVE
+==================================================*/
+
+@media(max-width:600px) {
+
+
+    .profile-window {
+
+        width: 92vw;
+
+        height: 80vh;
+
+        border-radius: 25px;
+
+    }
+
+
+    .profile-close {
+
+        width: 35px;
+
+        height: 35px;
+
+        font-size: 22px;
+
+    }
+
+}

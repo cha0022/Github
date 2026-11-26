@@ -1,0 +1,31 @@
+{# FLOW NOTE: Flask supplies page data to this login template; Jinja renders its page blocks and shared layout/partials. #}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Login | HIANIME</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='site-polish.css') }}?v=anilist-1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='responsive-overrides.css') }}?v=v23-responsive-2">
+</head>
+<body class="login-page">
+    <main class="login-card">
+        <div class="admin-brand-icon" aria-hidden="true">H</div>
+        <p class="admin-brand">HIANIME<br>ADMIN</p>
+        <h1>Sign in to your workspace</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <p class="flash {{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endwith %}
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label class="admin-input"><span aria-hidden="true">👤</span><input name="username" autocomplete="username" placeholder="Username" aria-label="Username" required></label>
+            <label class="admin-input"><span aria-hidden="true">🔒</span><input type="password" name="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required></label>
+            <button class="admin-submit" type="submit">Sign in</button>
+        </form>
+        <p class="system-ready">Secure administrator access</p>
+    </main>
+</body>
+</html>

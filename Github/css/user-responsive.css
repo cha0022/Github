@@ -1,0 +1,409 @@
+/* FLOW NOTE: Active catalog breakpoints; templates/home.html loads this after user.css to keep the anime catalog responsive. */
+/* AniList hero slides use wide banner art, filling the carousel instead of showing a poster fallback. */
+.catalog-page .hero-slider .slide-image {
+    object-fit: cover !important;
+    object-position: center 42% !important;
+    background: #0b1725;
+}
+.catalog-page .hero-slider { touch-action: pan-y; }
+.catalog-page .hero-slider.is-dragging { cursor: grabbing; }
+
+/* Strong page-offset reset for the anime sections rendered directly in body. */
+body {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    translate: none !important;
+    margin-left: 0 !important;
+    left: auto !important;
+    right: auto !important;
+}
+
+body>section.anime-section {
+    display: block !important;
+    position: relative !important;
+    float: none !important;
+    clear: both !important;
+    inset-inline: auto !important;
+    transform: none !important;
+    translate: none !important;
+    width: min(94vw, 1480px) !important;
+    max-width: 1480px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+@media (max-width: 700px) {
+    body>section.anime-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+}
+
+/* Reset any leftover desktop/sidebar offset that pushes the page sideways. */
+html,
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+}
+
+.site-header,
+.hero-slider {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.anime-section {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Responsive home layout: use more of the available screen width. */
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.anime-section {
+    width: min(94vw, 1480px) !important;
+    max-width: 1480px !important;
+    margin: clamp(24px, 4vw, 56px) auto !important;
+    padding-inline: clamp(12px, 2vw, 30px) !important;
+}
+
+.section-header {
+    width: 100%;
+}
+
+.anime-row {
+    display: grid !important;
+    width: 100% !important;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(132px, 12vw, 190px), 1fr)) !important;
+    gap: clamp(12px, 1.5vw, 22px) !important;
+    align-items: start;
+}
+
+.anime-card-link,
+.anime-card {
+    width: 100% !important;
+    min-width: 0;
+}
+
+.anime-card-image {
+    width: 100% !important;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+}
+
+.anime-card-image img {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+}
+
+.anime-card-info {
+    min-width: 0;
+}
+
+.anime-card-info h3 {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    .anime-section {
+        width: 100% !important;
+        margin-block: 24px !important;
+        padding-inline: 14px !important;
+    }
+
+    .anime-row {
+        grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)) !important;
+        gap: 12px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .anime-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* FLOW NOTE: Keep the home content and Top Anime rail inside the viewport; the rail stacks below the cards on tablet/mobile widths. */
+.catalog-page,
+.catalog-page .home-feed-layout,
+.catalog-page .home-feed-main,
+.catalog-page .home-feed-sidebar,
+.catalog-page .top-anime-panel,
+.catalog-page .top-anime-list {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.catalog-page .home-feed-layout {
+    display: grid;
+    width: calc(100% - 32px);
+    max-width: 1480px;
+    margin: 24px auto 56px;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+    align-items: start;
+    gap: clamp(16px, 2vw, 28px);
+    isolation: isolate;
+}
+
+.site-header.shared-site-header { position:sticky; top:0; z-index:120; }
+
+.catalog-page .home-feed-sidebar {
+    position:static;
+    z-index:10;
+    align-self:start;
+}
+
+.catalog-page .home-feed-sidebar > .top-anime-panel {
+    position:relative;
+    top:auto;
+    width:100%;
+    max-width:100%;
+    max-height:none;
+}
+
+.catalog-page .home-feed-main {
+    width: 100%;
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.catalog-page .home-feed-sidebar {
+    width: 100%;
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.catalog-page .top-anime-panel {
+    width: 100%;
+    overflow: hidden;
+}
+
+.catalog-page .top-anime-list .top-anime-card,
+.catalog-page .top-anime-list .top-anime-card a {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.catalog-page .top-anime-list .top-anime-card h3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    .catalog-page .home-feed-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .catalog-page .home-feed-main,
+    .catalog-page .home-feed-sidebar {
+        grid-column: 1;
+    }
+
+    .catalog-page .home-feed-sidebar {
+        grid-row: 1;
+        position: static;
+        z-index:auto;
+        align-self:start;
+    }
+
+    .catalog-page .home-feed-sidebar > .top-anime-panel {
+        position:relative;
+        top:auto;
+        right:auto;
+        width:100%;
+        max-width:100%;
+        max-height:390px;
+    }
+
+    .catalog-page .home-feed-main {
+        grid-row: 2;
+    }
+
+    .catalog-page .home-feed-sidebar {
+        align-self: start;
+    }
+
+    .catalog-page .top-anime-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .catalog-page .home-feed-section#latest-episode .feed-results > .anime-card {
+        flex-basis:calc((100% - 48px) / 4);
+    }
+}
+
+@media (max-width: 560px) {
+    .catalog-page .home-feed-layout {
+        width: calc(100% - 24px);
+        margin-block: 18px 40px;
+    }
+
+    .catalog-page .top-anime-list {
+        display: flex;
+        max-height: none;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .catalog-page .top-anime-list .top-anime-card {
+        flex: 0 0 min(245px, 78vw);
+    }
+
+    .catalog-page .home-feed-section#latest-episode .feed-results > .anime-card {
+        flex-basis:calc((100% - 16px) / 2);
+    }
+}
+
+/* FLOW NOTE: Keep feed sections inside the main grid column so their headers cannot slide under the sticky Top Anime rail. */
+.catalog-page .home-feed-main > .home-feed-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin-inline: 0 !important;
+}
+
+.catalog-page .home-feed-main {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Release columns are grid items, not full-width anime sections. */
+.catalog-page .home-feed-main > .release-collections {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    box-sizing: border-box !important;
+}
+
+.catalog-page .home-feed-main > .release-collections > .release-collection {
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 640px) {
+    .catalog-page .home-feed-main > .release-collections {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+/* AniList Top Anime stays in normal page flow and is never clipped or sticky. */
+.catalog-page .home-feed-sidebar,
+.catalog-page .home-feed-sidebar > .top-anime-panel {
+    position: static !important;
+    inset: auto !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+@media (max-width: 900px) {
+    .catalog-page .home-feed-sidebar > .top-anime-panel {
+        max-height: none !important;
+    }
+
+    .catalog-page .top-anime-list {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: none !important;
+        overflow: visible !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .catalog-page .home-feed-heading {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .catalog-page .home-feed-heading .feed-tabs {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .catalog-page .home-feed-heading .episode-carousel-controls {
+        margin-left: auto;
+    }
+
+    .catalog-page .hero-slider {
+        width: calc(100% - 20px) !important;
+        height: clamp(290px, 58svh, 410px) !important;
+        margin-inline: auto !important;
+        border: 1px solid #26384c;
+        border-radius: 12px;
+    }
+
+    .catalog-page .hero-slider .content {
+        top: auto;
+        bottom: 22px;
+        left: 18px;
+        width: calc(100% - 36px);
+        max-width: 480px;
+        transform: none;
+    }
+
+    .catalog-page .hero-slider .content h1 {
+        margin-bottom: 10px;
+        font-size: clamp(27px, 8vw, 38px);
+    }
+
+    .catalog-page .hero-slider .content p {
+        max-width: 42ch;
+        margin-bottom: 12px;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .catalog-page .top-anime-panel {
+        padding: 12px;
+    }
+
+    .catalog-page .top-anime-list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+    }
+
+    .catalog-page .home-feed-layout {
+        width: calc(100% - 20px);
+        gap: 20px;
+    }
+
+    .catalog-page .home-feed-section#latest-episode .feed-results > .anime-card {
+        flex-basis: calc((100% - 12px) / 2);
+    }
+}
