@@ -35,7 +35,8 @@ APP_ROOT = Path(__file__).resolve().parent
 load_dotenv(APP_ROOT / ".env")
 configured_media_root = os.getenv("SITE_MEDIA_ROOT")
 MEDIA_ROOT = Path(configured_media_root).resolve() if configured_media_root else (APP_ROOT.parent if (APP_ROOT.parent / "images").is_dir() else APP_ROOT)
-ANIME_SDK_URL = os.getenv("ANIME_SDK_URL", "http://127.0.0.1:3000").rstrip("/")
+IS_RENDER = os.getenv("RENDER", "").strip().lower() == "true"
+ANIME_SDK_URL = os.getenv("ANIME_SDK_URL", "" if IS_RENDER else "http://127.0.0.1:3000").rstrip("/")
 ANIME_SDK_TOKEN = os.getenv("ANIME_SDK_TOKEN", "")
 ANIME_SDK_PUBLIC_PROXY_BASE = os.getenv("ANIME_SDK_PUBLIC_PROXY_BASE", "http://127.0.0.1:5000/proxy").rstrip("/")
 ANILIST_GRAPHQL_URL = os.getenv("ANILIST_GRAPHQL_URL", "https://graphql.anilist.co").rstrip("/")
@@ -620,6 +621,7 @@ def get_anilist_home_slides(limit=5):
                 "slider_image": image,
                 "image_fallbacks": [],
                 "score": (item.get("averageScore") or 0) / 10 or None,
+                "episodes": item.get("episodes"),
             })
         if slides:
             _anilist_home_slides["items"] = slides
@@ -1221,11 +1223,61 @@ def watch_episode():
             anime_id = int(existing["id"]) if existing else None
             anime = anime_by_id(anime_id) if anime_id else None
             if anime is None:
-                result = anilist_request(
-                    f"query ($id:Int!){{Media(id:$id,type:ANIME){{{ANILIST_HERO_FIELDS}}}}}",
-                    {"id": requested_anilist_id}, timeout=12,
-                )
-                media = result.get("Media")
+                # Reuse the exact AniList card already returned to the browser.
+                # Avoids a second network lookup that can fail/rate-limit on Render.
+                media = None
+                now = time.monotonic()
+                for expires_at, cached_items, _has_next in _anilist_catalog_cache.values():
+                    if expires_at <= now:
+                        continue
+                    media = next(
+                        (item for item in cached_items if int(item.get("id") or 0) == requested_anilist_id),
+                        None,
+                    )
+                    if media:
+                        break
+                if media is None:
+                    for expires_at, cached_items in _anilist_trending_cache.values():
+                        if expires_at <= time.time():
+                            continue
+                        cached = next(
+                            (item for item in cached_items if int(item.get("anilist_id") or item.get("id") or 0) == requested_anilist_id),
+                            None,
+                        )
+                        if cached:
+                            state = {"Ongoing": "RELEASING", "Completed": "FINISHED", "Upcoming": "NOT_YET_RELEASED", "Hiatus": "HIATUS"}.get(cached.get("status"), "RELEASING")
+                            media = {
+                                "id": requested_anilist_id,
+                                "title": {"english": cached.get("title")},
+                                "description": "",
+                                "coverImage": {"extraLarge": cached.get("image"), "large": cached.get("image_fallback") or cached.get("image")},
+                                "bannerImage": cached.get("banner") or "",
+                                "genres": [], "status": state,
+                                "episodes": cached.get("episodes"),
+                                "startDate": {"year": cached.get("year")},
+                            }
+                            break
+                if media is None:
+                    # Hero carousel entries have a compact cache shape too.
+                    for cached in _anilist_home_slides.get("items", []):
+                        if int(cached.get("anilist_id") or 0) != requested_anilist_id:
+                            continue
+                        media = {
+                            "id": requested_anilist_id,
+                            "title": {"english": cached.get("title")},
+                            "description": cached.get("description") or "",
+                            "coverImage": {"extraLarge": cached.get("slider_image"), "large": cached.get("slider_image")},
+                            "bannerImage": cached.get("slider_image") or "",
+                            "genres": [], "status": "RELEASING", "episodes": cached.get("episodes"),
+                            "startDate": {},
+                        }
+                        break
+                if media is None:
+                    result = anilist_request(
+                        f"query ($id:Int!){{Media(id:$id,type:ANIME){{{ANILIST_HERO_FIELDS}}}}}",
+                        {"id": requested_anilist_id}, timeout=12,
+                    )
+                    media = result.get("Media")
                 if media:
                     titles = media.get("title") or {}
                     cover = media.get("coverImage") or {}
@@ -1244,9 +1296,30 @@ def watch_episode():
                         "genres": ", ".join(media.get("genres") or []),
                         "status": "Ongoing" if state == "RELEASING" else "Completed" if state == "FINISHED" else "Upcoming" if state == "NOT_YET_RELEASED" else "Hiatus",
                         "release_date": start_date.get("year"),
+                        "episode_count": int(media.get("episodes") or 0),
                     }
         except (pymysql.MySQLError, requests.RequestException, ValueError, TypeError) as error:
             app.logger.info("Could not open AniList title %s: %s", requested_anilist_id, error)
+    # The card itself already knows its title and episode count. Use those
+    # values as a final detail-page fallback instead of redirecting back home.
+    if anime is None and requested_anilist_id:
+        fallback_title = request.args.get("title", "").strip()[:200]
+        if fallback_title:
+            try:
+                fallback_episode_count = max(0, min(int(request.args.get("episode_count", "0") or 0), 1000))
+            except (TypeError, ValueError):
+                fallback_episode_count = 0
+            anime_id = 0
+            anime = {
+                "id": 0, "anilist_id": requested_anilist_id,
+                "title": fallback_title,
+                "description": "",
+                "image": request.args.get("poster", "")[:1000],
+                "card_image": request.args.get("poster", "")[:1000],
+                "slider_image": "", "banner_image": "", "genres": "",
+                "status": "Anime", "release_date": None,
+                "episode_count": fallback_episode_count,
+            }
     if anime is None:
         flash("Hindi makita ang anime na iyon.", "error")
         return redirect(url_for("home"))
@@ -1275,7 +1348,7 @@ def watch_episode():
             "title": unit.get("title") or unit.get("name") or "",
             "video": f"sdk-catalog:{unit.get('provider', catalog_provider)}:{unit.get('id', '')}",
         } for unit in sdk_units]
-        if source in sdk_providers or not episodes:
+        if source in sdk_providers or (not episodes and source not in direct_providers):
             episodes = sdk_episodes
             sdk_catalog_anime = True
             source = catalog_provider
@@ -1283,6 +1356,16 @@ def watch_episode():
             present_numbers = {int(item.get("episode_number") or 0) for item in episodes}
             episodes.extend(item for item in sdk_episodes if item["episode_number"] not in present_numbers)
             episodes.sort(key=lambda item: int(item.get("episode_number") or 0))
+    episode_count = int(anime.get("episode_count") or 0)
+    if not episodes and episode_count > 0 and (source == "vidrift" or not ANIME_SDK_URL):
+        episodes = [{
+            "id": 0, "anime_id": anime_id, "episode_number": number,
+            "title": f"Episode {number}", "video": "",
+        } for number in range(1, min(episode_count, 1000) + 1)]
+        if not source:
+            source = "vidrift"
+    if not source and not ANIME_SDK_URL and (anime.get("anilist_id") or requested_anilist_id):
+        source = "vidrift"
     episode = next((item for item in episodes if item["episode_number"] == episode_number), None)
     if episode is None and "episode" not in request.args and episodes:
         episode = episodes[0]
