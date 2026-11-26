@@ -1,0 +1,117 @@
+{# FLOW NOTE: Flask supplies page data to this navbar template; Jinja renders its page blocks and shared layout/partials. #}
+<!-- DEBUG NOTE: IDs here are required by the unchanged includes/site-nav.js for search and mega-menu behavior. -->
+<header class="site-header shared-site-header topbar">
+    <div class="header-brand">
+        <button class="site-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
+        <a class="logo brand" href="{{ url_for('home') }}">
+            <img src="{{ media_url('images/hianime-logo.png') }}" alt="HIANIME">
+        </a>
+    </div>
+    <nav class="quick-nav" aria-label="Main navigation">
+        <a href="{{ url_for('home') }}#latest-anime" title="Watch2gether">◉ <span>Watch2gether</span></a>
+        <a href="{{ url_for('community') }}">▤ <span>Community</span></a>
+        <a href="{{ url_for('anilist_catalog_page', category='upcoming') }}">▦ <span>Upcoming</span></a>
+        <button type="button" onclick="goToRandomItem()" aria-label="Surprise me" title="Surprise me">⤨</button>
+        <div class="quick-nav-language" aria-label="Language"><button type="button" class="active" aria-pressed="true">EN</button><button type="button" aria-pressed="false">JP</button></div>
+    </nav>
+    <div class="shared-home-actions header-actions">
+        <div class="user-page-tools">
+            {% if user %}
+            {% set nav_blocked = account_is_blocked(user) %}
+            {% set nav_ban_key = (user.id|string) ~ ':' ~ (user.ban_until|string) ~ ':' ~ (user.ban_reason|string) %}
+            <button type="button" id="newAnimeToggle" class="user-page-tool notification-toggle" aria-expanded="false" aria-label="Notifications" data-latest-id="{{ nav_latest_anime_id|default(0) }}" data-ban-active="{{ '1' if nav_blocked else '0' }}" data-ban-key="{{ nav_ban_key }}">
+                <span aria-hidden="true">♧</span><span id="newAnimeBadge" class="user-notification-badge" hidden>0</span>
+            </button>
+            <section id="newAnimePanel" class="new-anime-panel" hidden>
+                <div class="new-anime-heading"><strong>Notifications</strong><button type="button" id="clearNewAnime">Clear</button></div>
+                {% if nav_blocked %}
+                    <div id="newAnimeBlockNotice" class="new-anime-block-notice" role="alert">
+                        {% if user.ban_status == 'Banned' and user.ban_until %}
+                            <strong>Temporary account restriction</strong>
+                            <p>Hindi mo muna magagamit ang account na ito hanggang {{ user.ban_until.strftime('%b %d, %Y %I:%M %p') }} UTC.</p>
+                            {% if user.ban_reason %}<small>Reason: {{ user.ban_reason }}</small>{% endif %}
+                        {% else %}
+                            <strong>Account blocked</strong><p>Hindi magagamit ang account na ito. Makipag-ugnayan sa administrator.</p>
+                            {% if user.ban_reason %}<small>Reason: {{ user.ban_reason }}</small>{% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div id="newAnimeItems"><p class="new-anime-empty">No new anime yet.</p></div>
+            </section>
+            <div id="newAnimeToast" class="new-anime-toast" role="status" aria-live="polite" hidden></div>
+            {% endif %}
+            <button type="button" id="userSearchToggle" class="user-page-tool" aria-expanded="false" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></button>
+            <section class="user-search-panel" id="userSearchPanel" hidden>
+                <div class="user-search-input"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg><input id="userSearchQuery" type="search" placeholder="Search anime on AniList..." autocomplete="off"><button id="userSearchClear" type="button">Clear</button><button id="userSearchSubmit" class="search-submit" type="button">Search</button></div>
+                <div class="user-search-options"><div class="user-search-tabs"><button type="button" class="active" data-search-kind="anime" aria-selected="true">Anime</button><button type="button" data-search-kind="users" aria-selected="false">User</button></div><label>Filter <select id="userSearchStatus"><option value="">All</option><option value="Ongoing">Ongoing</option><option value="Completed">Completed</option><option value="Upcoming">Upcoming</option><option value="Hiatus">Hiatus</option></select></label></div>
+                <div class="user-search-results" id="userSearchResults"><p>Type an anime title, then press Enter or Search.</p></div>
+                <div class="user-search-hints"><span>↓ ↑ to navigate</span><span>↵ to select</span><span>ESC to exit</span></div>
+            </section>
+        </div>
+        <div class="quick-nav-language mobile-nav-language" aria-label="Language"><button type="button" class="active" aria-pressed="true">EN</button><button type="button" aria-pressed="false">JP</button></div>
+        {% if user %}
+            {% set border_name = user.avatar_border or 'normal-01.gif' %}
+            <div class="shared-account-box" data-user-key="{{ user.id }}" data-avatar-border="{{ media_url('avatar-borders/' ~ border_name) }}" data-border-save-url="{{ url_for('save_avatar_border') }}">
+                <button type="button" class="shared-account" aria-haspopup="true" aria-expanded="false" onclick="toggleSharedAccount(this)">
+                    <span class="shared-avatar-frame{% if nav_blocked %} is-blocked{% endif %}"><img class="profile-image" src="{{ media_url(user.profile_picture or 'images/default-avatar.png') }}" alt="Profile"><img class="shared-avatar-border" src="{{ media_url('avatar-borders/' ~ border_name) }}" alt="" aria-hidden="true">{% if nav_blocked %}<span class="avatar-blocked-stamp" aria-label="Blocked">BLOCKED</span>{% endif %}</span>
+                    <span class="username">{{ user.username }}</span><span class="shared-account-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="shared-account-menu" hidden>
+                    <a href="#change-avatar" onclick="openSharedAvatar();return false;">🖼 Change Avatar</a><a href="#avatar-borders" onclick="openSharedAvatarBorders();return false;">✨ Avatar Borders</a><a href="{{ url_for('profile') }}">Profile</a><a href="{{ url_for('home') }}">Home</a><a href="{{ url_for('logout') }}" onclick="document.getElementById('navLogoutForm').requestSubmit();return false;">Logout</a>
+                    <form id="navLogoutForm" method="post" action="{{ url_for('logout') }}" hidden><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+                </div>
+            </div>
+        {% else %}
+            <nav class="header-auth shared-inline-auth" aria-label="Account actions"><a class="signin" href="#login" onclick="return false;" data-auth-open="login">Sign In →</a></nav>
+        {% endif %}
+    </div>
+</header>
+<div id="menuBackdrop" class="menu-backdrop" onclick="toggleMenu(false)"></div>
+<nav id="navbar" class="side-menu" aria-label="Main menu" aria-hidden="true">
+    <div class="menu-sidebar">
+        <a href="{{ url_for('home') }}#latest-anime" onclick="toggleMenu(false)">Watch2gether</a><a href="{{ url_for('community') }}" onclick="toggleMenu(false)">Community</a><a href="{{ url_for('anilist_catalog_page', category='upcoming') }}" onclick="toggleMenu(false)">Upcoming</a><a href="{{ url_for('home') }}#home" onclick="toggleMenu(false)">HOME</a>
+        <button type="button" class="menu-category active" onclick="showMenuPanel('genrePanel', this)">GENRE <span>›</span></button><button type="button" class="menu-category" onclick="showMenuPanel('typesPanel', this)">TYPES <span>›</span></button>
+        <a href="{{ url_for('anilist_catalog_page', category='episodes') }}" onclick="toggleMenu(false)">UPDATED</a><a href="{{ url_for('anilist_catalog_page', category='latest') }}" onclick="toggleMenu(false)">LATEST</a><a href="{{ url_for('anilist_catalog_page', category='popular') }}" onclick="toggleMenu(false)">POPULAR</a><a href="{{ url_for('anilist_catalog_page', category='upcoming') }}" onclick="toggleMenu(false)">UPCOMING</a><a href="{{ url_for('anilist_catalog_page', category='ongoing') }}" onclick="toggleMenu(false)">ONGOING</a><a href="{{ url_for('anilist_catalog_page', category='completed') }}" onclick="toggleMenu(false)">COMPLETED</a>
+    </div>
+    <div id="genrePanel" class="mega-panel active"><div class="genre-grid">{% for name in ['Action','Adventure','Comedy','Drama','Fantasy','Horror','Mahou Shoujo','Mecha','Music','Mystery','Psychological','Romance','Sci-Fi','Slice of Life','Sports','Supernatural','Thriller'] %}<a href="{{ url_for('genre_catalog', genre=name) }}" onclick="toggleMenu(false)">{{ name }}</a>{% endfor %}</div></div>
+    <div id="typesPanel" class="mega-panel"><div class="type-grid"><a href="{{ url_for('anilist_catalog_page', category='upcoming') }}">Upcoming Anime</a><a href="{{ url_for('anilist_catalog_page', category='ongoing') }}">Ongoing Anime</a><a href="{{ url_for('anilist_catalog_page', category='completed') }}">Completed Anime</a><a href="{{ url_for('anilist_catalog_page', category='hiatus') }}">Hiatus Anime</a></div></div>
+</nav>
+{% if user %}
+<div id="sharedAvatarModal" class="shared-nav-modal" hidden aria-hidden="true"><section class="shared-nav-dialog shared-avatar-dialog" role="dialog" aria-modal="true" aria-labelledby="sharedAvatarTitle"><header><h2 id="sharedAvatarTitle">Choose an Avatar</h2><button type="button" aria-label="Close" onclick="closeSharedNavModals()">×</button></header><iframe src="{{ url_for('choose_avatar') }}" title="Choose an avatar"></iframe></section></div>
+<div id="sharedAvatarBordersModal" class="shared-nav-modal" hidden aria-hidden="true"><section class="shared-nav-dialog shared-borders-dialog" role="dialog" aria-modal="true" aria-labelledby="sharedBordersTitle"><header><h2 id="sharedBordersTitle">Choose an Avatar Border</h2><button type="button" aria-label="Close" onclick="closeSharedNavModals()">×</button></header><div class="shared-border-options">
+    {% for border in nav_avatar_borders|default([], true) %}<button type="button" class="shared-border-option" data-border-src="{{ media_url('avatar-borders/' ~ border) }}"><span class="shared-border-preview"><img src="{{ media_url('avatar-borders/' ~ border) }}" alt=""></span><span>{{ border.rsplit('.', 1)[0]|replace('-', ' ')|replace('_', ' ')|title }}</span></button>{% else %}<p class="shared-border-empty">No avatar border GIFs found.</p>{% endfor %}
+</div><footer><button type="button" class="shared-border-reset" onclick="resetSharedAvatarBorder()">Remove border</button></footer></section></div>
+{% endif %}
+{% if not user %}
+<div class="auth-backdrop" id="authBackdrop" hidden>
+    <section class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <button type="button" class="modal-close" data-auth-close aria-label="Close">×</button>
+        <form id="loginForm" method="post" action="{{ url_for('home') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="login" value="1">
+            <h2 id="authTitle">Sign In</h2>
+            <input name="username" autocomplete="username" placeholder="Username" aria-label="Username" required>
+            <input type="password" name="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
+            <button class="primary" type="submit">Login</button>
+            <p class="auth-switch">Don't have an account? <button type="button" data-auth-tab="register">Register</button></p>
+        </form>
+        <form id="registerForm" method="post" action="{{ url_for('home') }}" hidden>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="register" value="1">
+            <h2 id="registerTitle">Register</h2>
+            <input name="username" minlength="3" autocomplete="username" placeholder="Username" aria-label="Username" required>
+            <input type="email" name="email" autocomplete="email" placeholder="Email" aria-label="Email" required>
+            <input type="email" name="confirm_email" autocomplete="off" placeholder="Confirm Email" aria-label="Confirm email" required>
+            <input type="password" name="password" autocomplete="new-password" placeholder="Password" aria-label="Password" required>
+            <input type="password" name="confirm_password" autocomplete="new-password" placeholder="Confirm Password" aria-label="Confirm password" required>
+            <button class="primary" type="submit">Create Account</button>
+            <p class="auth-switch">Already have an account? <button type="button" data-auth-tab="login">Login</button></p>
+        </form>
+    </section>
+</div>
+{% endif %}
+
+
+
+
+

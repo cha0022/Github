@@ -1,0 +1,72 @@
+{# FLOW NOTE: Flask supplies page data to this profile template; Jinja renders its page blocks and shared layout/partials. #}
+{% extends 'base.html' %}
+{% block title %}User Profile | HIANIME{% endblock %}
+{% block body_class %}profile-body{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user_update.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='profile-page.css') }}">
+{% endblock %}
+{% block content %}
+<!-- DEBUG NOTE: This page keeps profile, border, and history forms together; update_profile validates and saves the account form. -->
+<main class="profile-page">
+    <section class="profile-card">
+        <span class="profile-avatar-frame">
+            <img class="profile-avatar" src="{{ media_url(user.profile_picture or 'images/default-avatar.png') }}" alt="">
+            <img class="profile-avatar-border" src="{{ media_url('avatar-borders/' ~ (user.avatar_border or 'normal-01.gif')) }}" alt="" aria-hidden="true">
+        </span>
+        <h1>{{ user.username }}</h1>
+        <p>{{ user.email }}</p>
+        <p>Joined: {{ user.joined_date.strftime('%B %d, %Y') if user.joined_date else 'Unknown' }}</p>
+        <p>Status: {{ user.status or 'Offline' }}</p>
+        <p>Account: {{ user.account_status or 'Active' }}</p>
+        <a href="{{ url_for('choose_avatar') }}">Change Avatar</a>
+    </section>
+
+    <section class="profile-edit">
+        <h2>Update account</h2>
+        <form method="post" action="{{ url_for('update_profile') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Username <input name="username" value="{{ user.username }}" required></label>
+            <label>Email <input type="email" name="email" value="{{ user.email }}" required></label>
+            <label>Current password <input type="password" name="current_password" required></label>
+            <label>New password <input id="password" type="password" name="new_password" required></label>
+            <div id="strength" aria-live="polite">Password Strength</div>
+            <label>Confirm new password <input type="password" name="confirm_password" required></label>
+            <button class="primary" type="submit">Update profile</button>
+        </form>
+
+        <h2>Avatar border</h2>
+        <form method="post" action="{{ url_for('save_avatar_border') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Choose a border
+                <select name="border">
+                    {% for border in borders %}
+                        <option value="{{ border }}" {% if user.avatar_border == border %}selected{% endif %}>
+                            {{ border.replace('.gif', '').replace('-', ' ').title() }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button class="primary" type="submit">Save border</button>
+        </form>
+    </section>
+
+    <section class="watch-history">
+        <h2>Watch history</h2>
+        <div class="anime-grid">
+            {% for item in history %}
+                <a class="history-item" href="{{ url_for('watch_episode') }}?anime_id={{ item.anime_id }}&episode={{ item.episode_number }}">
+                    <img src="{{ media_url(item.card_image or item.image) }}" alt="">
+                    <span>{{ item.title }} · Episode {{ item.episode_number }}</span>
+                    <small>{{ item.progress }}% watched</small>
+                </a>
+            {% else %}
+                <p>Wala pang watch history.</p>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='user-update.js') }}" defer></script>{% endblock %}
+

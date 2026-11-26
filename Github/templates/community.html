@@ -1,0 +1,101 @@
+{# FLOW NOTE: Flask supplies page data to this community template; Jinja renders its page blocks and shared layout/partials. #}
+{% extends 'base.html' %}
+{% block title %}Community | HIANIME{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='community-original.css') }}">{% endblock %}
+{% block content %}
+<!-- DEBUG NOTE: Original community styles are preserved in static/community-original.css; community.js uses community-* aliases. -->
+<nav class="subnav community-subnav" aria-label="Community sections">
+    <a href="{{ url_for('home') }}">Anime</a>
+    <a class="active" href="{{ url_for('community') }}">Community</a>
+    <a href="#chat">Live Chat</a>
+    <a href="#shop">Shop</a>
+    <a href="#my-zone">My Zone</a>
+</nav>
+
+<section class="hero community-hero">
+    <h1>HIANIME Connect</h1>
+    <p>Makipag-usap sa kapwa anime fans.</p>
+</section>
+
+<main class="board community-board" data-current-user="{{ user.username if user else 'Charles' }}">
+    <aside class="categories community-categories" aria-label="Post categories">
+        {% for category, label in [('all', 'All'), ('updates', 'Updates'), ('general', 'General'), ('suggestion', 'Suggestion'), ('question', 'Question'), ('discussion', 'Discussion'), ('feedback', 'Feedback'), ('tierlist', 'TierList'), ('poll', 'Poll'), ('matchup', 'Matchup'), ('seasonal', 'Seasonal'), ('recommend', 'Recommend')] %}
+            <button class="category community-category {% if loop.first %}active{% endif %}" data-category="{{ category }}">
+                #{{ label }}
+            </button>
+        {% endfor %}
+    </aside>
+
+    <section class="main community-main">
+        <div class="tools community-tools">
+            <button class="pill primary" id="createPost">＋ Create</button>
+            <button class="pill" id="myPosts">☷ My Posts</button>
+            <label>Sort
+                <select id="sortPosts">
+                    <option value="latest">Latest</option>
+                    <option value="popular">Popular</option>
+                </select>
+            </label>
+            <input id="postSearch" type="search" placeholder="Search posts...">
+        </div>
+
+        <div class="posts community-posts" id="posts">
+            <article class="post community-post" data-category="general" data-author="Community Team" data-score="26">
+                <div class="meta post-meta"><span class="pin">📌 Pinned</span><span>#general</span><span>• 10 hours ago</span></div>
+                <h2>Subtitle Error</h2>
+                <p>May napansin ka bang subtitle issue? Ibahagi ang detalye para makatulong sa community.</p>
+                <footer>
+                    <span class="avatar-letter">H</span><span>Community Team</span>
+                    <div class="reactions post-reactions"><button class="like">♡ <span>26</span></button><button>♧ 4</button></div>
+                </footer>
+            </article>
+
+            <article class="post community-post" data-category="updates" data-author="Community Team" data-score="109">
+                <div class="meta post-meta"><span class="pin">📌 Pinned</span><span>#updates</span><span>• update</span></div>
+                <h2>The Cult Wars Season 1 (Event)</h2>
+                <p>We are having a Cult of the Month competition. Before we get into the details, make sure to register your club by opening a ticket on the support page.</p>
+                <footer>
+                    <span class="avatar-letter">H</span><span>Community Team</span>
+                    <div class="reactions post-reactions"><button class="like">♡ <span>109</span></button><button>♧ 14</button></div>
+                </footer>
+            </article>
+
+            <article class="post community-post" data-category="updates" data-author="Community Team" data-score="187">
+                <div class="meta post-meta"><span class="pin">📌 Pinned</span><span>#updates</span><span>• update</span></div>
+                <h2>Friends are live, plus profile and post stuff</h2>
+                <p>Hey everyone! Friends are here. Open someone's profile and send a friend request. You can find updates and posts in your notification center.</p>
+                <footer>
+                    <span class="avatar-letter">H</span><span>Community Team</span>
+                    <div class="reactions post-reactions"><button class="like">♡ <span>187</span></button><button>♧ 31</button></div>
+                </footer>
+            </article>
+
+            <article class="post community-post" data-category="feedback" data-author="Charles" data-score="209">
+                <div class="meta post-meta"><span class="pin">📌 Pinned</span><span>#feedback</span><span>• Sep 10, 2026</span></div>
+                <h2>HIANIME Guides</h2>
+                <p>Mga sagot sa karaniwang tanong at gabay sa paggamit ng site.</p>
+                <footer>
+                    <span class="avatar-letter">C</span><span>Charles</span>
+                    <div class="reactions post-reactions"><button class="like">♡ <span>209</span></button><button>♧ 23</button></div>
+                </footer>
+            </article>
+
+            <article class="post community-post" data-category="discussion" data-author="Charles" data-score="0">
+                <div class="meta post-meta"><span>#discussion</span><span>• ngayon</span></div>
+                <h2>Anime discussion</h2>
+                <p>Anong anime ang kasalukuyan mong pinapanood? Ibahagi rito.</p>
+                <footer>
+                    <span class="avatar-letter">C</span><span>Charles</span>
+                    <div class="reactions post-reactions"><button class="like">♡ <span>0</span></button><button>♧ 0</button></div>
+                </footer>
+            </article>
+
+            <p class="empty community-empty" id="empty" hidden>Walang post na tumugma sa hinahanap mo.</p>
+        </div>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}
+    <script src="{{ url_for('static', filename='community.js') }}" defer></script>
+{% endblock %}
+
