@@ -428,13 +428,60 @@ def local_catalog_items(search="", sort="START_DATE_DESC", genre="", status="", 
     page = max(1, int(page or 1))
     try:
         return rows(
-            "SELECT id,title,COALESCE(card_image,image) AS image,status,release_date,genres "
+            "SELECT id,title,COALESCE(NULLIF(card_image,''),image) AS image,status,release_date,genres,description "
             "FROM anime" + where + f" ORDER BY {order} LIMIT %s OFFSET %s",
             (*params, limit, (page - 1) * limit),
         )
     except pymysql.MySQLError as error:
         app.logger.info("Local anime fallback unavailable: %s", error)
         return []
+
+
+def local_catalog_payload(item):
+    """Convert one saved TiDB anime row to the card format used by the site."""
+    release_date = item.get("release_date")
+    year = getattr(release_date, "year", None)
+    if year is None and release_date:
+        year = str(release_date)[:4]
+    genres = [value.strip() for value in str(item.get("genres") or "").split(",") if value.strip()]
+    return {
+        "id": item.get("id"),
+        "anilist_id": None,
+        "title": item.get("title") or "Anime",
+        "image": item.get("image") or "",
+        "image_fallback": item.get("image") or "",
+        "status": item.get("status") or "Anime",
+        "score": None,
+        "year": year,
+        "end_year": None,
+        "episodes": None,
+        "genres": genres,
+        "description": re.sub(r"<[^>]*>", " ", str(item.get("description") or "")).strip(),
+    }
+
+
+def local_home_slides(limit=10):
+    """Use saved featured titles when AniList cannot provide hero slides."""
+    try:
+        saved = rows(
+            "SELECT id,title,description,anilist_id,"
+            "COALESCE(NULLIF(slider_image,''),NULLIF(banner_image,''),NULLIF(card_image,''),image) AS slider_image "
+            "FROM anime WHERE featured=1 ORDER BY featured_order ASC,id DESC LIMIT %s",
+            (max(1, min(int(limit or 10), 20)),),
+        )
+    except pymysql.MySQLError as error:
+        app.logger.info("TiDB homepage fallback unavailable: %s", error)
+        return []
+    return [{
+        "anilist": False,
+        "anilist_id": item.get("anilist_id"),
+        "category": "Saved anime",
+        "title": item.get("title") or "Anime",
+        "description": re.sub(r"<[^>]*>", " ", str(item.get("description") or "")).strip(),
+        "slider_image": item.get("slider_image") or "",
+        "image_fallbacks": [],
+        "score": None,
+    } for item in saved]
 
 
 @app.get("/genre/<path:genre>")
@@ -1811,7 +1858,7 @@ def anilist_home_slides_api():
         return jsonify(items=get_anilist_home_slides(limit=10), source="AniList")
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList home slides unavailable: %s", error)
-        return jsonify(items=[], source="AniList", error="AniList is temporarily unavailable."), 503
+        return jsonify(items=local_home_slides(limit=10), source="TiDB", fallback=True)
 
 
 @app.get("/api/anilist/trending")
@@ -1821,7 +1868,9 @@ def anilist_trending_api():
         return jsonify(items=get_anilist_trending(period=period, limit=10), period=period, source="AniList")
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList %s trending list unavailable: %s", period, error)
-        return jsonify(items=[], period=period, source="AniList", error="Hindi ma-load ang trending anime ngayon."), 503
+        fallback = local_catalog_items(sort="START_DATE_DESC", limit=10, page=1)
+        items = [local_catalog_payload(item) | {"trend_score": max(1, 10 - index)} for index, item in enumerate(fallback)]
+        return jsonify(items=items, period=period, source="TiDB", fallback=True)
 
 
 @app.get("/api/anilist/schedule")
@@ -1871,7 +1920,21 @@ def anilist_catalog_api():
         return jsonify(items=output, page=page, has_next=has_next, source=source)
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList catalog feed unavailable: %s", error)
-        return jsonify(items=[], page=page, has_next=False, source="AniList", error="Hindi makakonekta sa AniList ngayon."), 503
+        fallback = local_catalog_items(
+            search=search,
+            sort=sort,
+            genre=genre,
+            status=status,
+            limit=min(per_page, 24),
+            page=page,
+        )
+        return jsonify(
+            items=[local_catalog_payload(item) for item in fallback],
+            page=page,
+            has_next=False,
+            source="TiDB",
+            fallback=True,
+        )
 
 
 @app.get("/api/anime-sdk/search")
