@@ -164,7 +164,13 @@
                 source.textContent = `ANILIST${anime.score ? ` · ★ ${Number(anime.score).toFixed(2)}` : ""}`;
                 const link = document.createElement("a");
                 link.className = "watch-now";
-                link.href = anime.anilist_id ? `/watch?anilist_id=${encodeURIComponent(anime.anilist_id)}` : "#latest-anime";
+                const watchParams = new URLSearchParams();
+                if (anime.anime_id) watchParams.set("anime_id", anime.anime_id);
+                else if (anime.anilist_id) watchParams.set("anilist_id", anime.anilist_id);
+                if (anime.title) watchParams.set("title", anime.title);
+                if (anime.episodes) watchParams.set("episode_count", anime.episodes);
+                if (anime.slider_image) watchParams.set("poster", anime.slider_image);
+                link.href = watchParams.size ? `/watch?${watchParams}` : "#latest-anime";
                 link.textContent = "Watch Now";
                 content.append(category, heading, description, source, link);
                 slide.append(content);
@@ -203,7 +209,15 @@
         const selectedStatus = params.get('status');
         const selectedGenre = params.get('genre') || '';
         const titleFor = (item) => item.title || 'Anime';
-        const watchUrlFor = (item) => `/watch?anilist_id=${encodeURIComponent(item.anilist_id || item.id)}`;
+        const watchUrlFor = (item) => {
+            const query = new URLSearchParams();
+            if (item.anime_id) query.set('anime_id', item.anime_id);
+            else query.set('anilist_id', item.anilist_id || item.id);
+            if (item.title) query.set('title', item.title);
+            if (item.episodes) query.set('episode_count', item.episodes);
+            if (item.image) query.set('poster', item.image);
+            return `/watch?${query}`;
+        };
         const makeCard = (item, index, ranked, rankOverride = null, server = '') => {
             const card = document.createElement('article');
             card.className = ranked ? 'anime-card top-anime-card' : 'anime-card';
