@@ -428,7 +428,7 @@ def local_catalog_items(search="", sort="START_DATE_DESC", genre="", status="", 
     page = max(1, int(page or 1))
     try:
         return rows(
-            "SELECT id,title,COALESCE(NULLIF(card_image,''),image) AS image,status,release_date,genres,description "
+            "SELECT id,anilist_id,title,COALESCE(NULLIF(card_image,''),image) AS image,status,release_date,genres,description "
             "FROM anime" + where + f" ORDER BY {order} LIMIT %s OFFSET %s",
             (*params, limit, (page - 1) * limit),
         )
@@ -446,7 +446,8 @@ def local_catalog_payload(item):
     genres = [value.strip() for value in str(item.get("genres") or "").split(",") if value.strip()]
     return {
         "id": item.get("id"),
-        "anilist_id": None,
+        "anime_id": item.get("id"),
+        "anilist_id": item.get("anilist_id"),
         "title": item.get("title") or "Anime",
         "image": item.get("image") or "",
         "image_fallback": item.get("image") or "",
@@ -474,6 +475,7 @@ def local_home_slides(limit=10):
         return []
     return [{
         "anilist": False,
+        "anime_id": item.get("id"),
         "anilist_id": item.get("anilist_id"),
         "category": "Saved anime",
         "title": item.get("title") or "Anime",
@@ -1268,6 +1270,13 @@ def watch_episode():
             existing = row("SELECT id FROM anime WHERE anilist_id=%s LIMIT 1", (requested_anilist_id,))
             anime_id = int(existing["id"]) if existing else None
             anime = anime_by_id(anime_id) if anime_id else None
+            # Local TiDB fallback cards can carry a local primary key when no
+            # AniList mapping exists. Resolve that ID locally before asking AniList.
+            if anime is None:
+                local = anime_by_id(requested_anilist_id)
+                if local and not local.get("anilist_id"):
+                    anime_id = requested_anilist_id
+                    anime = local
             if anime is None:
                 result = anilist_request(
                     f"query ($id:Int!){{Media(id:$id,type:ANIME){{{ANILIST_HERO_FIELDS}}}}}",
@@ -1865,7 +1874,13 @@ def anilist_home_slides_api():
 def anilist_trending_api():
     period = request.args.get("period", "day").casefold()
     try:
-        return jsonify(items=get_anilist_trending(period=period, limit=10), period=period, source="AniList")
+        items = get_anilist_trending(period=period, limit=10)
+        if items:
+            return jsonify(items=items, period=period, source="AniList")
+        # A successful but empty upstream response should still use saved TiDB titles.
+        fallback = local_catalog_items(sort="START_DATE_DESC", limit=10, page=1)
+        items = [local_catalog_payload(item) | {"trend_score": max(1, 10 - index)} for index, item in enumerate(fallback)]
+        return jsonify(items=items, period=period, source="TiDB", fallback=True)
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList %s trending list unavailable: %s", period, error)
         fallback = local_catalog_items(sort="START_DATE_DESC", limit=10, page=1)
@@ -1898,6 +1913,16 @@ def anilist_catalog_api():
             items, has_next = anilist_letter_catalog(letter, page=max(1, page), per_page=24)
         else:
             items, has_next = anilist_catalog_items(search, sort, genre, status, page, per_page)
+        if not items:
+            fallback = local_catalog_items(
+                search=search, sort=sort, genre=genre, status=status,
+                limit=min(per_page, 24), page=page,
+            )
+            if fallback:
+                return jsonify(
+                    items=[local_catalog_payload(item) for item in fallback],
+                    page=page, has_next=False, source="TiDB", fallback=True,
+                )
         output = []
         for item in items:
             image = (item.get("coverImage") or {}).get("extraLarge") or (item.get("coverImage") or {}).get("large") or ""
