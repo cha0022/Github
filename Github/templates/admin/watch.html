@@ -1,0 +1,20 @@
+{# FLOW NOTE: Flask supplies page data to this watch template; Jinja renders its page blocks and shared layout/partials. #}
+{% extends 'admin/base.html' %}
+{% block title %}Preview Episode | HIANIME{% endblock %}
+{% block content %}
+<main class="admin-shell">
+    <p><a href="{{ url_for('admin_episodes', anime_id=episode.anime_id) }}">← Back to episodes</a></p>
+    <h1>{{ episode.title }} · Episode {{ episode.episode_number }}</h1>
+    <div class="player-wrap">
+        {% if episode.video and (episode.video.startswith('http://') or episode.video.startswith('https://')) %}
+            <iframe class="episode-player" src="{{ episode.video }}" allowfullscreen title="Admin episode preview"></iframe>
+        {% elif episode.video %}
+            <video class="episode-player" controls>
+                <source src="{{ media_url(episode.video) }}">
+            </video>
+        {% else %}
+            <p>No video source is set.</p>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,38 @@
+{# FLOW NOTE: AniList powers the full paginated collection; query controls choose a status, sort order, or alphabetic search. #}
+{% extends 'base.html' %}
+{% block title %}{{ title }} | HIANIME{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user.css') }}?v=catalog-home-11">
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user-responsive.css') }}?v=catalog-rail-12">
+{% endblock %}
+{% block content %}
+<main class="genre-catalog-page all-anime-page">
+    <nav class="genre-breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('home') }}">Home</a><span>/</span><span>{{ title }}</span></nav>
+    <header class="genre-catalog-heading"><p class="catalog-kicker">LIVE FROM ANILIST</p><h1>{{ title }}</h1><p>Live, naka-page na anime catalog. Hanapin ang luma, kasalukuyan, at parating na anime.</p></header>
+    <nav class="catalog-page-categories" aria-label="Anime collections">
+        <a class="{% if category == 'episodes' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='episodes') }}">Latest Episodes</a>
+        <a class="{% if category == 'trending' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='trending') }}">Trending</a>
+        <a class="{% if category == 'popular' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='popular') }}">Popular</a>
+        <a class="{% if category == 'latest' and not letter %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='latest') }}">Latest</a>
+        <a class="{% if category == 'upcoming' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='upcoming') }}">Upcoming</a>
+        <a class="{% if category == 'ongoing' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='ongoing') }}">Ongoing</a>
+        <a class="{% if category == 'hiatus' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='hiatus') }}">Hiatus</a>
+        <a class="{% if category == 'completed' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='completed') }}">Completed</a>
+        <a class="{% if category == 'new' %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', category='new') }}">New Added</a>
+    </nav>
+    {% if letter %}
+    <nav class="footer-alphabet catalog-alphabet" aria-label="Choose first letter">
+        {% for item in '#ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}<a class="{% if item == letter %}selected{% endif %}" href="{{ url_for('anilist_catalog_page', letter=item) }}">{{ item }}</a>{% endfor %}
+    </nav>
+    {% endif %}
+    <section class="anime-section home-feed-section genre-feed" data-anilist-feed data-sort="{{ sort }}" data-status="{{ status }}" data-letter="{{ letter }}" data-limit="24" data-page="{{ request.args.get('page', 1) }}">
+        <div class="anime-grid feed-results" aria-live="polite"><p class="catalog-message">Loading anime…</p></div>
+        <nav class="catalog-pagination" data-catalog-pagination aria-label="Catalog pages">
+            <button type="button" data-page-prev disabled>← Previous</button>
+            <span data-page-label>Page {{ request.args.get('page', 1) }}</span>
+            <button type="button" data-page-next>Next →</button>
+        </nav>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='home.js') }}?v=catalog-home-15" defer></script>{% endblock %}

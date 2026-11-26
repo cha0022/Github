@@ -1,0 +1,38 @@
+{# FLOW NOTE: Search pages use AniList as the live source and keep the existing AniKoto-inspired card styles. #}
+{% extends 'base.html' %}
+{% block title %}Search Anime | HIANIME{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user.css') }}?v=catalog-home-11">
+<link rel="stylesheet" href="{{ url_for('site_asset', asset_path='css/user-responsive.css') }}?v=catalog-rail-12">
+{% endblock %}
+{% block content %}
+<main class="genre-catalog-page">
+    <nav class="genre-breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('home') }}">Home</a><span>/</span><span>Search</span></nav>
+    <header class="genre-catalog-heading"><p class="catalog-kicker">LIVE FROM ANILIST</p><h1>Search Anime</h1><p>Search old, ongoing, and upcoming anime from AniList.</p></header>
+    <form class="anilist-full-search" action="{{ url_for('anilist_search_page') }}" method="get">
+        <input type="search" name="q" value="{{ query }}" placeholder="Search anime titles…" aria-label="Search AniList anime" required>
+        <button class="feed-more" type="submit">Search AniList</button>
+    </form>
+    {% if error %}<p class="catalog-message">{{ error }}</p>
+    {% elif query %}
+    <section class="anime-section home-feed-section genre-feed">
+        <header><h2>Results for “{{ query }}”</h2><span class="catalog-live"><i></i> AniList</span></header>
+        <div class="anime-grid feed-results">
+            {% for anime in items %}
+            <article class="anime-card"><a class="anime-card-link" href="{{ url_for('watch_episode', anilist_id=anime.id) }}">
+                <img loading="lazy" src="{{ anime.image }}" alt="Poster for {{ anime.title }}">
+                <span class="anime-status">{{ anime.status }}</span><h3>{{ anime.title }}</h3>
+                <small class="catalog-card-meta">{% if anime.year %}{{ anime.year }}{% endif %}{% if anime.score %} · ★ {{ '%.2f'|format(anime.score) }}{% endif %}{% if anime.episodes %} · {{ anime.episodes }} eps{% endif %}</small>
+                <span class="anime-hover-info"><strong>{{ anime.title }}</strong><small class="anime-hover-rating">{{ anime.status }}{% if anime.score %} · ★ {{ '%.2f'|format(anime.score) }}{% endif %}{% if anime.year %} · {{ anime.year }}{% endif %}</small><span class="anime-hover-description">{{ anime.description|default('Tingnan ang detalye at mga available na episode.', true)|striptags|truncate(220, true, '…') }}</span>{% if anime.genres %}<small class="anime-hover-genres">{{ anime.genres|join(' · ') }}</small>{% endif %}<span class="anime-hover-action">▶  Watch anime</span></span>
+            </a></article>
+            {% else %}<p class="catalog-message">No anime found for “{{ query }}”.</p>{% endfor %}
+        </div>
+        <nav class="anilist-search-pagination" aria-label="Search pages">
+            {% if page > 1 %}<a class="feed-more" href="{{ url_for('anilist_search_page', q=query, page=page - 1) }}">← Previous</a>{% endif %}
+            <span>Page {{ page }}</span>
+            {% if has_next %}<a class="feed-more" href="{{ url_for('anilist_search_page', q=query, page=page + 1) }}">Next →</a>{% endif %}
+        </nav>
+    </section>
+    {% endif %}
+</main>
+{% endblock %}

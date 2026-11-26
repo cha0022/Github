@@ -1,0 +1,14 @@
+{# FLOW NOTE: Flask supplies page data to this  nav template; Jinja renders its page blocks and shared layout/partials. #}
+<header class="robot-nav">
+    <a class="robot-logo" href="{{ url_for('admin_dashboard') }}"><span class="admin-logo-mark">H</span> HIANIME <small>ADMIN</small></a>
+    <button class="admin-menu-toggle" type="button" aria-expanded="false" aria-controls="adminNavMenu" aria-label="Open navigation">☰</button>
+    <nav id="adminNavMenu" class="admin-nav-menu" aria-label="Admin navigation">
+        <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+        <div class="admin-nav-dropdown"><button type="button" class="admin-dropdown-toggle" aria-expanded="false">User management <span aria-hidden="true">▾</span></button><div class="admin-dropdown-menu" hidden>
+            <a href="{{ url_for('admin_users') }}">All users</a><button type="button" class="active-users-open"><span class="nav-online-dot"></span> Active users</button><a href="{{ url_for('admin_integrations') }}#anilist">AniList catalog</a><a href="{{ url_for('admin_integrations') }}#anime-sdk">Streaming providers</a>
+        </div></div>
+        <a href="{{ url_for('admin_anime') }}">Anime catalog</a>
+        <a href="{{ url_for('admin_profile') }}">Admin profile</a>
+        <button type="button" class="admin-theme-toggle" aria-label="Toggle light mode">◐</button>
+    </nav>
+</header>
