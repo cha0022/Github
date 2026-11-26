@@ -61,18 +61,20 @@ ANIME_STATUSES = ("Ongoing", "Completed", "Upcoming", "Hiatus")
 
 
 def get_db():
-    """Open one database connection per request; close it in teardown below."""
     if "db" not in g:
         g.db = pymysql.connect(
-            host=os.getenv("DB_HOST", "127.0.0.1"),
-            port=int(os.getenv("DB_PORT", "3306")),
-            user=os.getenv("DB_USER", "root"),
-            password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "developer_db"),
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT", "4000")),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME", "hianime"),
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
             init_command="SET time_zone = '+00:00'",
             autocommit=False,
+            ssl_ca="/etc/ssl/certs/ca-certificates.crt",
+            ssl_verify_cert=True,
+            ssl_verify_identity=True,
         )
     return g.db
 
