@@ -3,6 +3,7 @@
     const slider = document.querySelector(".hero-slider");
 
     const getSlides = () => Array.from(slider.querySelectorAll(".slide:not([hidden])"));
+    const getDots = () => Array.from(slider.querySelectorAll(".dots button"));
     const imageKey = (url) => {
         try {
             const parsed = new URL(url);
@@ -10,8 +11,19 @@
         } catch (_) { return String(url || "").split("?")[0].toLowerCase(); }
     };
 
+    function setControlsVisible(count) {
+        const show = count > 1;
+        const dots = slider.querySelector(".dots");
+        const previous = slider.querySelector(".hero-prev");
+        const next = slider.querySelector(".hero-next");
+        if (dots) dots.hidden = !show;
+        if (previous) previous.hidden = !show;
+        if (next) next.hidden = !show;
+    }
+
     function syncAfterRemoval(activeIndex) {
         const slides = getSlides();
+        const dots = getDots();
         if (!slides.length) {
             const fallback = slider.querySelector("[data-fallback-slide]");
             if (fallback) {
@@ -22,6 +34,7 @@
                 if (message) message.textContent = "Walang sapat na high-resolution na anime image para sa slider ngayon.";
             }
             slider.dataset.activeSlide = "0";
+            setControlsVisible(0);
             return;
         }
         const nextActive = Math.max(0, Math.min(activeIndex, slides.length - 1));
@@ -30,7 +43,13 @@
             slide.classList.toggle("active", active);
             slide.setAttribute("aria-hidden", String(!active));
         });
+        dots.forEach((dot, index) => {
+            const active = index === nextActive;
+            dot.classList.toggle("active", active);
+            dot.setAttribute("aria-current", String(active));
+        });
         slider.dataset.activeSlide = String(nextActive);
+        setControlsVisible(slides.length);
     }
 
     function rejectLowQualitySlide(image) {
@@ -40,6 +59,8 @@
         const position = slides.indexOf(slide);
         if (position < 0) return;
         const activeBefore = Math.max(0, slides.findIndex((item) => item.classList.contains("active")));
+        const dots = getDots();
+        dots[position]?.remove();
         slide.remove();
         let nextActive = activeBefore;
         if (activeBefore === position) nextActive = Math.min(position, slides.length - 2);
@@ -81,47 +102,11 @@
         if (slider.dataset.anilistFallback !== "1") return;
         const fallback = slider.querySelector("[data-fallback-slide]");
         try {
-            let results = [];
-            try {
-                const response = await fetch("/api/anilist/home-slides", { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
-                if (response.ok) results = (await response.json()).items || [];
-            } catch (_) { /* Try AniList directly below when the local proxy is offline. */ }
-
-            if (!results.length) {
-                const query = `query {
-                    trending: Page(page: 1, perPage: 20) { media(type: ANIME, sort: TRENDING_DESC, isAdult: false) { id idMal title { english romaji native } description bannerImage averageScore } }
-                    newReleases: Page(page: 1, perPage: 20) { media(type: ANIME, sort: START_DATE_DESC, status: RELEASING, isAdult: false) { id idMal title { english romaji native } description bannerImage averageScore } }
-                }`;
-                const response = await fetch("https://graphql.anilist.co", {
-                    method: "POST",
-                    headers: {Accept: "application/json", "Content-Type": "application/json"},
-                    body: JSON.stringify({query}),
-                    signal: AbortSignal.timeout(16000)
-                });
-                if (!response.ok) throw new Error(`AniList returned ${response.status}`);
-                const payload = await response.json();
-                if (payload.errors?.length) throw new Error("AniList query failed");
-                const data = payload.data || {};
-                const trending = data.trending?.media || [];
-                const latest = data.newReleases?.media || [];
-                results = [];
-                for (let index = 0; index < Math.max(trending.length, latest.length); index++) {
-                    for (const [anime, category] of [[trending[index], "Trending"], [latest[index], "New Release"]]) {
-                        if (!anime) continue;
-                        const title = anime.title?.english || anime.title?.romaji || anime.title?.native || "Featured anime";
-                        results.push({
-                            anilist_id: anime.id,
-                            title,
-                            description: anime.description || "Discover this anime from AniList.",
-                            slider_image: anime.bannerImage,
-                            score: anime.averageScore ? anime.averageScore / 10 : null,
-                            category
-                        });
-                    }
-                }
-            }
+            const response = await fetch("/api/anilist/home-slides", { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
+            if (!response.ok) throw new Error(`AniList returned ${response.status}`);
+            const results = (await response.json()).items || [];
             const slides = [];
-            const used = new Set(Array.from(slider.querySelectorAll(".slide-image"), (image) => imageKey(image.src)));
+            const used = new Set();
 
             for (const anime of results) {
                 // Only wide AniList banner art belongs in the hero carousel;
@@ -136,6 +121,7 @@
             }
 
             if (!slides.length) throw new Error("AniList did not return anime artwork.");
+            const dots = slider.querySelector(".dots");
             for (const [index, item] of slides.entries()) {
                 const anime = item.anime;
                 const title = anime.title || "Featured anime";
@@ -164,11 +150,22 @@
                 source.textContent = `ANILIST${anime.score ? ` · ★ ${Number(anime.score).toFixed(2)}` : ""}`;
                 const link = document.createElement("a");
                 link.className = "watch-now";
-                link.href = anime.anilist_id ? `/watch?anilist_id=${encodeURIComponent(anime.anilist_id)}` : "#latest-anime";
+                link.href = anime.anime_id
+                    ? `/watch?anime_id=${encodeURIComponent(anime.anime_id)}`
+                    : anime.anilist_id
+                        ? `/watch?anilist_id=${encodeURIComponent(anime.anilist_id)}`
+                        : "#latest-anime";
                 link.textContent = "Watch Now";
                 content.append(category, heading, description, source, link);
                 slide.append(content);
-                slider.insertBefore(slide, fallback || null);
+                slider.insertBefore(slide, dots);
+
+                const dot = document.createElement("button");
+                dot.type = "button";
+                dot.setAttribute("aria-label", `Show slide ${index + 1}`);
+                dot.setAttribute("aria-current", String(index === 0));
+                if (index === 0) dot.classList.add("active");
+                dots.append(dot);
                 bindImageFallback(artwork);
             }
 
@@ -185,6 +182,7 @@
                 }
             }
             slider.dataset.anilistFallback = "0";
+            setControlsVisible(slides.length);
         } catch (error) {
             console.warn("AniList slider fallback unavailable:", error);
             const message = fallback?.querySelector(".content p");
@@ -203,7 +201,9 @@
         const selectedStatus = params.get('status');
         const selectedGenre = params.get('genre') || '';
         const titleFor = (item) => item.title || 'Anime';
-        const watchUrlFor = (item) => `/watch?anilist_id=${encodeURIComponent(item.anilist_id || item.id)}`;
+        const watchUrlFor = (item) => item.anime_id
+            ? `/watch?anime_id=${encodeURIComponent(item.anime_id)}`
+            : `/watch?anilist_id=${encodeURIComponent(item.anilist_id || item.id)}`;
         const makeCard = (item, index, ranked, rankOverride = null, server = '') => {
             const card = document.createElement('article');
             card.className = ranked ? 'anime-card top-anime-card' : 'anime-card';
@@ -514,9 +514,9 @@
     }
 
     function initCarousel() {
-        if (!slider || slider.dataset.carouselInitialized === "1") return;
-        slider.dataset.carouselInitialized = "1";
         slider.querySelectorAll(".slide-image").forEach(bindImageFallback);
+        const previous = slider.querySelector(".hero-prev");
+        const next = slider.querySelector(".hero-next");
         let timer = null;
 
         function activeIndex() {
@@ -526,12 +526,18 @@
         }
         function showSlide(requestedIndex) {
             const slides = getSlides();
+            const dots = getDots();
             if (!slides.length) return;
             const index = ((requestedIndex % slides.length) + slides.length) % slides.length;
             slides.forEach((slide, i) => {
                 const active = i === index;
                 slide.classList.toggle("active", active);
                 slide.setAttribute("aria-hidden", String(!active));
+            });
+            dots.forEach((dot, i) => {
+                const active = i === index;
+                dot.classList.toggle("active", active);
+                dot.setAttribute("aria-current", String(active));
             });
             slider.dataset.activeSlide = String(index);
         }
@@ -541,41 +547,23 @@
         }
         function startTimer() {
             stopTimer();
-            if (getSlides().length < 2 || document.hidden) return;
-            timer = window.setInterval(() => showSlide(activeIndex() + 1), 5000);
+            if (getSlides().length > 1 && !document.hidden) {
+                timer = window.setInterval(() => showSlide(activeIndex() + 1), 5500);
+            }
         }
-        slider.restartHeroTimer = startTimer;
 
-        let pointerStart = null;
-        slider.addEventListener("pointerdown", (event) => {
-            if (event.button !== 0 || event.target.closest("a, button, input, select")) return;
-            pointerStart = {x: event.clientX, y: event.clientY, id: event.pointerId};
-            slider.classList.add("is-dragging");
-            slider.setPointerCapture?.(event.pointerId);
+        window.currentSlide = (number) => { showSlide(Number(number) - 1); startTimer(); };
+        slider.querySelector(".dots")?.addEventListener("click", (event) => {
+            const dot = event.target.closest("button");
+            const index = getDots().indexOf(dot);
+            if (index >= 0) { showSlide(index); startTimer(); }
         });
-        slider.addEventListener("pointerup", (event) => {
-            if (!pointerStart || event.pointerId !== pointerStart.id) return;
-            const deltaX = event.clientX - pointerStart.x;
-            const deltaY = event.clientY - pointerStart.y;
-            pointerStart = null;
-            slider.classList.remove("is-dragging");
-            if (Math.abs(deltaX) > 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-                showSlide(activeIndex() + (deltaX < 0 ? 1 : -1));
-                slider.dataset.dragged = "1";
-                window.setTimeout(() => { delete slider.dataset.dragged; }, 250);
-                startTimer();
-            }
+        previous?.addEventListener("click", () => { showSlide(activeIndex() - 1); startTimer(); });
+        next?.addEventListener("click", () => { showSlide(activeIndex() + 1); startTimer(); });
+        slider.addEventListener("focusin", stopTimer);
+        slider.addEventListener("focusout", (event) => {
+            if (!slider.contains(event.relatedTarget)) startTimer();
         });
-        slider.addEventListener("pointercancel", () => {
-            pointerStart = null;
-            slider.classList.remove("is-dragging");
-        });
-        slider.addEventListener("click", (event) => {
-            if (slider.dataset.dragged === "1") {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-        }, true);
         document.addEventListener("visibilitychange", () => document.hidden ? stopTimer() : startTimer());
 
         let touchStartX = null;
@@ -588,13 +576,38 @@
             startTimer();
         }, { passive: true });
 
+        // Mouse drag for desktop; keep arrow and dot buttons available.
+        let pointerStart = null;
+        let pointerStartY = null;
+        slider.addEventListener("pointerdown", (event) => {
+            if (event.pointerType !== "mouse" || event.button !== 0 || event.target.closest("button, a")) return;
+            pointerStart = event.clientX;
+            pointerStartY = event.clientY;
+            stopTimer();
+            slider.setPointerCapture(event.pointerId);
+        });
+        slider.addEventListener("pointerup", (event) => {
+            if (pointerStart === null) return;
+            const distanceX = event.clientX - pointerStart;
+            const distanceY = event.clientY - pointerStartY;
+            if (Math.abs(distanceX) > 55 && Math.abs(distanceX) > Math.abs(distanceY)) {
+                showSlide(activeIndex() + (distanceX < 0 ? 1 : -1));
+                event.preventDefault();
+            }
+            pointerStart = null;
+            pointerStartY = null;
+            startTimer();
+        });
+        slider.addEventListener("pointercancel", () => {
+            pointerStart = null;
+            pointerStartY = null;
+            startTimer();
+        });
+
         syncAfterRemoval(activeIndex());
         startTimer();
     }
 
     initAniListFeeds();
-    if (slider) {
-        initCarousel();
-        loadAniListFallback().finally(() => slider.restartHeroTimer?.());
-    }
+    if (slider) loadAniListFallback().finally(initCarousel);
 })();
