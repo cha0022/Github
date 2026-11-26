@@ -66,17 +66,17 @@ def get_db():
     """Open one database connection per request; close it in teardown below."""
     if "db" not in g:
         connection_options = dict(
-            host=os.getenv("DB_HOST", "" if IS_RENDER else "127.0.0.1"),
-            port=int(os.getenv("DB_PORT", "4000" if IS_RENDER else "3306")),
-            user=os.getenv("DB_USER", "" if IS_RENDER else "root"),
+            host=os.getenv("DB_HOST", "127.0.0.1"),
+            port=int(os.getenv("DB_PORT", "3306")),
+            user=os.getenv("DB_USER", "root"),
             password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "hianime" if IS_RENDER else "developer_db"),
+            database=os.getenv("DB_NAME", "developer_db"),
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
             init_command="SET time_zone = '+00:00'",
             autocommit=False,
         )
-        tls_enabled = os.getenv("DB_SSL", "1" if IS_RENDER else "0").strip().lower() in {"1", "true", "yes", "on"}
+        tls_enabled = os.getenv("DB_SSL", "0").strip().lower() in {"1", "true", "yes", "on"}
         if tls_enabled:
             ca_path = os.getenv("DB_SSL_CA", "").strip() or None
             tls_context = ssl.create_default_context(cafile=ca_path)
@@ -428,62 +428,13 @@ def local_catalog_items(search="", sort="START_DATE_DESC", genre="", status="", 
     page = max(1, int(page or 1))
     try:
         return rows(
-            "SELECT id,anilist_id,title,COALESCE(NULLIF(card_image,''),image) AS image,status,release_date,genres,description "
+            "SELECT id,title,COALESCE(card_image,image) AS image,status,release_date,genres "
             "FROM anime" + where + f" ORDER BY {order} LIMIT %s OFFSET %s",
             (*params, limit, (page - 1) * limit),
         )
     except pymysql.MySQLError as error:
         app.logger.info("Local anime fallback unavailable: %s", error)
         return []
-
-
-def local_catalog_payload(item):
-    """Convert one saved TiDB anime row to the card format used by the site."""
-    release_date = item.get("release_date")
-    year = getattr(release_date, "year", None)
-    if year is None and release_date:
-        year = str(release_date)[:4]
-    genres = [value.strip() for value in str(item.get("genres") or "").split(",") if value.strip()]
-    return {
-        "id": item.get("id"),
-        "anime_id": item.get("id"),
-        "anilist_id": item.get("anilist_id"),
-        "title": item.get("title") or "Anime",
-        "image": item.get("image") or "",
-        "image_fallback": item.get("image") or "",
-        "status": item.get("status") or "Anime",
-        "score": None,
-        "year": year,
-        "end_year": None,
-        "episodes": None,
-        "genres": genres,
-        "description": re.sub(r"<[^>]*>", " ", str(item.get("description") or "")).strip(),
-    }
-
-
-def local_home_slides(limit=10):
-    """Use saved featured titles when AniList cannot provide hero slides."""
-    try:
-        saved = rows(
-            "SELECT id,title,description,anilist_id,"
-            "COALESCE(NULLIF(slider_image,''),NULLIF(banner_image,''),NULLIF(card_image,''),image) AS slider_image "
-            "FROM anime WHERE featured=1 ORDER BY featured_order ASC,id DESC LIMIT %s",
-            (max(1, min(int(limit or 10), 20)),),
-        )
-    except pymysql.MySQLError as error:
-        app.logger.info("TiDB homepage fallback unavailable: %s", error)
-        return []
-    return [{
-        "anilist": False,
-        "anime_id": item.get("id"),
-        "anilist_id": item.get("anilist_id"),
-        "category": "Saved anime",
-        "title": item.get("title") or "Anime",
-        "description": re.sub(r"<[^>]*>", " ", str(item.get("description") or "")).strip(),
-        "slider_image": item.get("slider_image") or "",
-        "image_fallbacks": [],
-        "score": None,
-    } for item in saved]
 
 
 @app.get("/genre/<path:genre>")
@@ -670,6 +621,7 @@ def get_anilist_home_slides(limit=5):
                 "slider_image": image,
                 "image_fallbacks": [],
                 "score": (item.get("averageScore") or 0) / 10 or None,
+                "episodes": item.get("episodes"),
             })
         if slides:
             _anilist_home_slides["items"] = slides
@@ -1270,18 +1222,9 @@ def watch_episode():
             existing = row("SELECT id FROM anime WHERE anilist_id=%s LIMIT 1", (requested_anilist_id,))
             anime_id = int(existing["id"]) if existing else None
             anime = anime_by_id(anime_id) if anime_id else None
-            # Local TiDB fallback cards can carry a local primary key when no
-            # AniList mapping exists. Resolve that ID locally before asking AniList.
             if anime is None:
-                local = anime_by_id(requested_anilist_id)
-                if local and not local.get("anilist_id"):
-                    anime_id = requested_anilist_id
-                    anime = local
-            if anime is None:
-                # If this ID was just displayed from AniList, reuse the cached
-                # catalog record instead of making a second network request.
-                # This keeps the detail page working when AniList rate-limits
-                # the follow-up request from the hosting server.
+                # Reuse the exact AniList card already returned to the browser.
+                # Avoids a second network lookup that can fail/rate-limit on Render.
                 media = None
                 now = time.monotonic()
                 for expires_at, cached_items, _has_next in _anilist_catalog_cache.values():
@@ -1294,8 +1237,6 @@ def watch_episode():
                     if media:
                         break
                 if media is None:
-                    # Trending cards use a compact cache shape, so adapt the
-                    # cached title/artwork into the fields needed by the watch page.
                     for expires_at, cached_items in _anilist_trending_cache.values():
                         if expires_at <= time.time():
                             continue
@@ -1311,12 +1252,26 @@ def watch_episode():
                                 "description": "",
                                 "coverImage": {"extraLarge": cached.get("image"), "large": cached.get("image_fallback") or cached.get("image")},
                                 "bannerImage": cached.get("banner") or "",
-                                "genres": [],
-                                "status": state,
+                                "genres": [], "status": state,
                                 "episodes": cached.get("episodes"),
                                 "startDate": {"year": cached.get("year")},
                             }
                             break
+                if media is None:
+                    # Hero carousel entries have a compact cache shape too.
+                    for cached in _anilist_home_slides.get("items", []):
+                        if int(cached.get("anilist_id") or 0) != requested_anilist_id:
+                            continue
+                        media = {
+                            "id": requested_anilist_id,
+                            "title": {"english": cached.get("title")},
+                            "description": cached.get("description") or "",
+                            "coverImage": {"extraLarge": cached.get("slider_image"), "large": cached.get("slider_image")},
+                            "bannerImage": cached.get("slider_image") or "",
+                            "genres": [], "status": "RELEASING", "episodes": cached.get("episodes"),
+                            "startDate": {},
+                        }
+                        break
                 if media is None:
                     result = anilist_request(
                         f"query ($id:Int!){{Media(id:$id,type:ANIME){{{ANILIST_HERO_FIELDS}}}}}",
@@ -1381,17 +1336,11 @@ def watch_episode():
             present_numbers = {int(item.get("episode_number") or 0) for item in episodes}
             episodes.extend(item for item in sdk_episodes if item["episode_number"] not in present_numbers)
             episodes.sort(key=lambda item: int(item.get("episode_number") or 0))
-    # AniList supplies the episode count but no video stream. When the SDK
-    # bridge has no episode list, still create selectable episode numbers so
-    # the existing Vidrift embed route can build its /anilist/{id}/{episode} URL.
     episode_count = int(anime.get("episode_count") or 0)
     if not episodes and episode_count > 0 and (source == "vidrift" or not ANIME_SDK_URL):
         episodes = [{
-            "id": 0,
-            "anime_id": anime_id,
-            "episode_number": number,
-            "title": f"Episode {number}",
-            "video": "",
+            "id": 0, "anime_id": anime_id, "episode_number": number,
+            "title": f"Episode {number}", "video": "",
         } for number in range(1, min(episode_count, 1000) + 1)]
         if not source:
             source = "vidrift"
@@ -1924,25 +1873,17 @@ def anilist_home_slides_api():
         return jsonify(items=get_anilist_home_slides(limit=10), source="AniList")
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList home slides unavailable: %s", error)
-        return jsonify(items=local_home_slides(limit=10), source="TiDB", fallback=True)
+        return jsonify(items=[], source="AniList", error="AniList is temporarily unavailable."), 503
 
 
 @app.get("/api/anilist/trending")
 def anilist_trending_api():
     period = request.args.get("period", "day").casefold()
     try:
-        items = get_anilist_trending(period=period, limit=10)
-        if items:
-            return jsonify(items=items, period=period, source="AniList")
-        # A successful but empty upstream response should still use saved TiDB titles.
-        fallback = local_catalog_items(sort="START_DATE_DESC", limit=10, page=1)
-        items = [local_catalog_payload(item) | {"trend_score": max(1, 10 - index)} for index, item in enumerate(fallback)]
-        return jsonify(items=items, period=period, source="TiDB", fallback=True)
+        return jsonify(items=get_anilist_trending(period=period, limit=10), period=period, source="AniList")
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList %s trending list unavailable: %s", period, error)
-        fallback = local_catalog_items(sort="START_DATE_DESC", limit=10, page=1)
-        items = [local_catalog_payload(item) | {"trend_score": max(1, 10 - index)} for index, item in enumerate(fallback)]
-        return jsonify(items=items, period=period, source="TiDB", fallback=True)
+        return jsonify(items=[], period=period, source="AniList", error="Hindi ma-load ang trending anime ngayon."), 503
 
 
 @app.get("/api/anilist/schedule")
@@ -1970,16 +1911,6 @@ def anilist_catalog_api():
             items, has_next = anilist_letter_catalog(letter, page=max(1, page), per_page=24)
         else:
             items, has_next = anilist_catalog_items(search, sort, genre, status, page, per_page)
-        if not items:
-            fallback = local_catalog_items(
-                search=search, sort=sort, genre=genre, status=status,
-                limit=min(per_page, 24), page=page,
-            )
-            if fallback:
-                return jsonify(
-                    items=[local_catalog_payload(item) for item in fallback],
-                    page=page, has_next=False, source="TiDB", fallback=True,
-                )
         output = []
         for item in items:
             image = (item.get("coverImage") or {}).get("extraLarge") or (item.get("coverImage") or {}).get("large") or ""
@@ -2002,21 +1933,7 @@ def anilist_catalog_api():
         return jsonify(items=output, page=page, has_next=has_next, source=source)
     except (requests.RequestException, ValueError, TypeError) as error:
         app.logger.info("AniList catalog feed unavailable: %s", error)
-        fallback = local_catalog_items(
-            search=search,
-            sort=sort,
-            genre=genre,
-            status=status,
-            limit=min(per_page, 24),
-            page=page,
-        )
-        return jsonify(
-            items=[local_catalog_payload(item) for item in fallback],
-            page=page,
-            has_next=False,
-            source="TiDB",
-            fallback=True,
-        )
+        return jsonify(items=[], page=page, has_next=False, source="AniList", error="Hindi makakonekta sa AniList ngayon."), 503
 
 
 @app.get("/api/anime-sdk/search")
@@ -2307,12 +2224,12 @@ def admin_logout():
 def database_error(error):
     # Do not show connection strings or SQL details to site visitors.
     app.logger.error("MySQL operation failed: %s", error)
-    return render_template("error.html", message="Hindi makakonekta sa database. Suriin ang DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, at DB_SSL sa Render Environment."), 503
+    return render_template("error.html", message="Hindi makakonekta sa developer_db. Tingnan kung naka-start ang MySQL sa XAMPP at tama ang .env settings."), 503
 
 
 @app.cli.command("db-check")
 def db_check():
-    """Read-only diagnostic: confirm that the configured MySQL-compatible database is reachable."""
+    """Read-only diagnostic: confirm that XAMPP MySQL and developer_db are reachable."""
     result = row("SELECT DATABASE() AS db_name, COUNT(*) AS anime_count FROM anime")
     click.echo(f"Connected to {result['db_name']}; anime rows: {result['anime_count']}.")
 
@@ -2320,3 +2237,4 @@ def db_check():
 if __name__ == "__main__":
     # Flask runs separately from Apache; XAMPP is used here for MySQL only.
     app.run(host="127.0.0.1", port=5000, debug=True)
+
